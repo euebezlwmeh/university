@@ -1,3 +1,5 @@
+// gcc paint.c -o paint -lcomdlg32 -lgdi32
+
 #include <windows.h>
 #include <commdlg.h>
 #include <stdio.h>
