@@ -10,11 +10,12 @@ class DbConnection:
         try:
             # Установите соединение с базой данных
             self.connection = psycopg2.connect(
-                dbname='bd_i_bz', 
+                dbname='repair', 
                 user='postgres', 
                 host='localhost', 
                 password='MH0375KCHA8',
-                port='5432'   # по умолчанию 5432
+                port='5432',  # по умолчанию 5432
+                client_encoding='UTF8'
             )
 
             # Создайте курсор для выполнения операций с базой данных
@@ -28,6 +29,10 @@ class DbConnection:
 
         except Exception as error:
             print("Error while connecting to PostgreSQL", error)
+
+    def __del__(self):
+        if hasattr(self, 'connection'):
+            self.connection.close()
 
 class WindowDefaultSize:
     def __init__(self, root):
@@ -339,39 +344,34 @@ class MainWindow(WindowDefaultSize):
         BackBtn(self.root, self.back)
         self.parent = parent
 
-        self.add_order_btn = tk.Button(self.root, font=("Arial", 14), text="Создать заказ", command=self.add_order_func)
+        self.db = DbConnection()
+
+        self.add_order_btn = tk.Button(self.root, 
+                                       font=("Arial", 14), 
+                                       text="Создать заказ", 
+                                       command=self.add_order_func)
         self.add_order_btn.place(x=220, y=100)
 
-        # self.order_arr = []
-        # columns = ("surface", "service")
+    def add_order_func(self):
+        self.add_servise_btn = tk.Button(self.root,
+                                     font=("Arial", 14),
+                                     text="Добавить услугу",
+                                     command=self.add_servise_func)
+        self.add_servise_btn.place(x=220, y=150)
+        
+    def add_servise_func(self):
+        surfaces_arr = []
 
-        # self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-
-        # self.client_name_label = tk.Label(self.root, bg="white", font=("Arial", 14), text="Иванов Иван Иванович")
-        # self.client_name_label.place(x=140, y=13)
-
-        # # surface
-        # self.surface_label = tk.Label(self.root, bg="#5e9fb9", font=("Arial", 14), text="Выберите поверхность:")
-        # self.surface_label.place(x=70, y=80)
-        # self.surface_floor_btn = tk.Button(self.root, bg="white", font=("Arial", 14), text="Пол")
-        # self.surface_floor_btn.place(x=70, y=120)
-        # self.surface_wall_btn = tk.Button(self.root, bg="white", font=("Arial", 14), text="Стены")
-        # self.surface_wall_btn.place(x=70, y=160)
-        # self.surface_ceiling_btn = tk.Button(self.root, bg="white", font=("Arial", 14), text="Потолок")
-        # self.surface_ceiling_btn.place(x=70, y=200)
-        # # service
-        # self.service_label = tk.Label(self.root, bg="#5e9fb9", font=("Arial", 14), text="Выберите услугу:")
-        # self.service_label.place(x=70, y=240)
-        # self.service_painting_btn = tk.Button(self.root, bg="white", font=("Arial", 14), text="Покраска")
-        # self.service_painting_btn.place(x=70, y=280)
-        # self.service_plaster_btn = tk.Button(self.root, bg="white", font=("Arial", 14), text="Штукатурка")
-        # self.service_plaster_btn.place(x=70, y=320)
-
-        # tree = ttk.Treeview(columns=columns, show="headings")
-        # # tree.pack(fill=, expand=1)
-
-        # tree.heading("surface", text="Поверхность")
-        # tree.heading("service", text="Услуга")
+        try:
+            self.db.cursor.execute(
+                "SELECT surface_name FROM surface"
+            )
+            for row in self.db.cursor:
+                surfaces_arr.append(row)
+            
+            print(surfaces_arr)
+        except:
+            print("ошибка")
 
     def back(self):
         self.root.destroy()
@@ -380,22 +380,6 @@ class MainWindow(WindowDefaultSize):
     def on_close(self):  # не работает как надо
         self.root.destroy()
         self.parent.destroy()
-
-    def add_order_func(self):
-        AddOrderWindow(self.root)
-        self.root.withdraw()
-
-class AddOrderWindow(WindowDefaultSize):
-    def __init__(self, parent):
-        self.root = tk.Toplevel(parent)
-        self.root.title("Ремонт помещений")
-        super().__init__(self.root)
-
-        BackBtn(self.root, self.back)
-        self.parent = parent
-
-    def back():
-        pass
 
 if __name__ == "__main__":
     root = tk.Tk()
