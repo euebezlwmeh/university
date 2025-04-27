@@ -808,94 +808,75 @@ class AllContractsWindow(WindowDefaultSize):
         self.coast_per_unit_id = coast_per_unit_id
         self.db = DbConnection()
 
-        # self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s", (self.client_id,))
-        # all_client_contracts = self.db.cursor.fetchall()
-
-        # self.contract_table = ttk.Treeview(self.root,
-        #                         columns=("Номер договора", "ID клиента", "ID помещения", "Дата заключения", "Итоговая стоимость"),
-        #                         show="headings")
-        # self.contract_table.heading("Номер договора", text="Номер договора")
-        # self.contract_table.heading("ID клиента", text="ID клиента")
-        # self.contract_table.heading("ID помещения", text="ID помещения")
-        # self.contract_table.heading("Дата заключения", text="Дата заключения")
-        # self.contract_table.heading("Итоговая стоимость", text="Итоговая стоимость")
-
-        # space_id_arr = []
-
-        # for contract in all_client_contracts:
-        #     contract_id, client_id1, space_id, conclusion_date, coast = contract
-        #     self.contract_table.insert("", "end", values=(contract_id, client_id1, space_id, conclusion_date.strftime("%d.%m.%Y"), f"{float(coast):.2f} ₽")) 
-        #     space_id_arr.append(space_id)
-        
-        # self.contract_table.grid(row=1, column=0, sticky="nw")
-
-
-
-        # self.spaces_table = ttk.Treeview(self.root,
-        #                                     columns=("ID помещения", "Street", "Номер дома", "Этаж", "Номер квартиры", "Количество комнат для ремонта"),
-        #                                     show="headings")
-        # self.spaces_table.heading("ID помещения", text="ID помещения")
-        # self.spaces_table.heading("Street", text="Улица")
-        # self.spaces_table.heading("Номер дома", text="Номер дома")
-        # self.spaces_table.heading("Этаж", text="Этаж")
-        # self.spaces_table.heading("Номер квартиры", text="Номер квартиры")
-        # self.spaces_table.heading("Количество комнат для ремонта", text="Количество комнат для ремонта")
-
-        # for space_id in space_id_arr:
-        #     self.db.cursor.execute("SELECT * FROM space WHERE space_id=%s", (space_id,))
-        #     all_client_spaces = self.db.cursor.fetchall()
-
-        #     for space in all_client_spaces:
-        #         space_id, street, home, floor_, apartment, rooms_num = space
-        #         self.spaces_table.insert("", "end", values=(space_id, street, home, floor_, apartment, rooms_num))
-
-        # self.spaces_table.grid(row=2, column=0, sticky="nw")
-
-        self.db.cursor.execute("""SELECT 
-                                    contract.contract_id,
-                                    CONCAT(space.street, ', д. ', space.home, ', кв. ', space.apartment, ', ', space.floor_, ' этаж, ', space.rooms_num, ' комн.') AS space_info,
-                                    contract.conclusion_date,
-                                    contract.total_coast,
-                                    CONCAT(surface.surface_name, ' - ', servise.servise_name) AS work_description,
-                                    works_under_contract.num_of_unit,
-                                    works_under_contract.coast_for_work
-                                FROM 
-                                    contract
-                                JOIN 
-                                    space ON contract.space_id = space.space_id
-                                JOIN 
-                                    works_under_contract ON contract.contract_id = works_under_contract.contract_id
-                                JOIN 
-                                    coast_per_unit ON works_under_contract.coast_per_unit_id = coast_per_unit.coast_per_unit_id
-                                JOIN 
-                                    surface ON coast_per_unit.surface_id = surface.surface_id
-                                JOIN 
-                                    servise ON coast_per_unit.servise_id = servise.servise_id
-                                JOIN
-                                    client ON contract.client_id = client.client_id
-                                WHERE 
-                                    client.client_id = 1
-                                ORDER BY 
-                                    contract.contract_id, work_description;""")
-        
+        self.db.cursor.execute(f"SELECT contract_id FROM contract WHERE client_id={self.client_id}")
         all_contracts = self.db.cursor.fetchall()
 
-        self.client_contracts_table = ttk.Treeview(self.root, 
-                                                   columns=("Номер договора", "Помещение", "Дата заключения", "Итоговая стоимость",  "Услуга", "Количество единиц", "Стоимость за услугу"),
-                                                   show="headings")
-        self.client_contracts_table.heading("Номер договора", text="Номер договора")
-        self.client_contracts_table.heading("Помещение", text="Помещение")
-        self.client_contracts_table.heading("Дата заключения", text="Дата заключения")
-        self.client_contracts_table.heading("Итоговая стоимость", text="Итоговая стоимость")
-        self.client_contracts_table.heading("Услуга", text="Услуга")
-        self.client_contracts_table.heading("Количество единиц", text="Количество единиц")
-        self.client_contracts_table.heading("Стоимость за услугу", text="Стоимость за услугу")
-
-
+        cnt = 0
         for contract in all_contracts:
-            contract_id, space_info, conclusion_date, total_coast, work_description, num_of_unit, coast_for_work = contract
-            self.client_contracts_table.insert("", "end", values=(contract_id, space_info, conclusion_date, total_coast, work_description, num_of_unit, coast_for_work))
-        self.client_contracts_table.grid(row=1, column=0, sticky="nw")
+            self.contract_num_label = tk.Label(self.root, 
+                                        font=("Arial", 12),
+                                        text=f"Номер договора: {contract[0]}")
+            self.contract_num_label.grid(row=1+cnt, column=0, sticky="nw")
+            
+            self.db.cursor.execute(f"""SELECT space.street, space.home, space.floor_, space.apartment, space.rooms_num
+                                   FROM space
+                                   JOIN contract ON contract.space_id = space.space_id
+                                   WHERE contract_id={contract[0]}""")
+            space = self.db.cursor.fetchone()
+            self.space_label = tk.Label(self.root,
+                                        font=("Arial", 12),
+                                        text=f"Адрес: ул. {space[0]}, д. {space[1]}, эт. {space[2]}, кв. {space[3]}, кол-во комнат: {space[4]}")
+            self.space_label.grid(row=2+cnt, column=0, sticky="nw")
+
+            self.db.cursor.execute(f"SELECT conclusion_date FROM contract WHERE contract_id={contract[0]}")
+            conclusion_date = self.db.cursor.fetchone()
+            self.conclusion_date_label = tk.Label(self.root, 
+                                                  font=("Arial", 12),
+                                                  text=f"Дата заключения договора: {conclusion_date[0]}")
+            self.conclusion_date_label.grid(row=3+cnt, column=0, sticky="nw")
+
+            self.db.cursor.execute(f"SELECT completion_date FROM contract WHERE contract_id={contract[0]}")
+            completion_date = self.db.cursor.fetchone()
+            self.completion_date_label = tk.Label(self.root, 
+                                                  font=("Arial", 12),
+                                                  text=f"Дата конца договора: {completion_date[0]}")
+            self.completion_date_label.grid(row=4+cnt, column=0, sticky="nw")
+
+            self.db.cursor.execute(f"SELECT total_coast FROM contract WHERE contract_id={contract[0]}")
+            total_coast = self.db.cursor.fetchone()
+            self.total_coast_label = tk.Label(self.root, 
+                                                  font=("Arial", 12),
+                                                  text=f"Общая стоимость: {total_coast[0]}")
+            self.total_coast_label.grid(row=5+cnt, column=0, sticky="nw")
+
+            self.db.cursor.execute(f"""SELECT contract_status.status FROM contract_status
+                                   JOIN contract ON contract.contract_status_id = contract_status.contract_status_id
+                                   WHERE contract_id={contract[0]}""")
+            status = self.db.cursor.fetchone()
+            self.status_label = tk.Label(self.root, 
+                                        font=("Arial", 12),
+                                        text=f"Статус: {status[0]}")
+            self.status_label.grid(row=6+cnt, column=0, sticky="nw")
+
+            self.db.cursor.execute(f"""SELECT servise.servise_name, works_under_contract.num_of_unit, works_under_contract.coast_for_work
+                                   FROM works_under_contract
+                                   JOIN contract ON works_under_contract.contract_id = contract.contract_id
+                                   JOIN coast_per_unit ON coast_per_unit.coast_per_unit_id = works_under_contract.coast_per_unit_id
+                                   JOIN servise ON servise.servise_id = coast_per_unit.servise_id
+                                   WHERE contract.contract_id={contract[0]}""")
+            works = self.db.cursor.fetchall()
+            self.works_table = ttk.Treeview(self.root,
+                                            columns=("Услуга", "Количество", "Стоимость"),
+                                            show="headings")
+            self.works_table.heading("Услуга", text="Услуга")
+            self.works_table.heading("Количество", text="Количество")
+            self.works_table.heading("Стоимость", text="Стоимость")
+            for work in works:
+                servise, num_of_unit, coast = work
+                self.works_table.insert("", "end", values=(servise, num_of_unit, coast))
+            self.works_table.grid(row=7+cnt, column=0, sticky="nw")
+
+            cnt += 7
         
     def back(self):
         self.root.destroy()
