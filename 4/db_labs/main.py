@@ -795,92 +795,177 @@ class MainWindow(WindowDefaultSize):
 class DeleteServise(WindowDefaultSize):
     pass
 
-class AllContractsWindow(WindowDefaultSize):
+class AllContractsWindow:
     def __init__(self, parent, client_id, coast_per_unit_id):
-
         self.root = tk.Toplevel(parent)
         self.root.title("Ремонт помещений. Договоры")
-        super().__init__(self.root)
-
-        BackBtn(self.root, self.back)
+        self.root.geometry("800x600")
+        
         self.parent = parent
         self.client_id = client_id
         self.coast_per_unit_id = coast_per_unit_id
         self.db = DbConnection()
 
-        self.db.cursor.execute(f"SELECT contract_id FROM contract WHERE client_id={self.client_id}")
+
+        self.main_container = tk.Frame(self.root)
+        self.main_container.pack(fill="both", expand=True, padx=10, pady=10)
+
+
+        self.back_button = tk.Button(self.main_container, 
+                                   text="Назад", 
+                                   command=self.back,
+                                   font=("Arial", 12))
+        self.back_button.pack(anchor="nw", pady=(0, 10))
+
+
+        self.scroll_frame = tk.Frame(self.main_container)
+        self.scroll_frame.pack(fill="both", expand=True)
+        self.canvas = tk.Canvas(self.scroll_frame)
+        self.scrollbar = tk.Scrollbar(self.scroll_frame, 
+                                    orient="vertical", 
+                                    command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+        self.content_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.content_frame, anchor="nw")
+        self.content_frame.bind("<Configure>", 
+                             lambda e: self.canvas.configure(
+                                 scrollregion=self.canvas.bbox("all")
+                             ))
+        self.canvas.bind("<MouseWheel>", self._on_mousewheel)
+        self.load_contracts()
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+    def load_contracts(self):
+        self.db.cursor.execute(
+            f"SELECT contract_id FROM contract WHERE client_id={self.client_id}"
+        )
         all_contracts = self.db.cursor.fetchall()
 
-        cnt = 0
+        row_counter = 0
+
         for contract in all_contracts:
-            self.contract_num_label = tk.Label(self.root, 
-                                        font=("Arial", 12),
-                                        text=f"Номер договора: {contract[0]}")
-            self.contract_num_label.grid(row=1+cnt, column=0, sticky="nw")
+            contract_id = contract[0]
             
-            self.db.cursor.execute(f"""SELECT space.street, space.home, space.floor_, space.apartment, space.rooms_num
-                                   FROM space
-                                   JOIN contract ON contract.space_id = space.space_id
-                                   WHERE contract_id={contract[0]}""")
+            contract_frame = tk.LabelFrame(
+                self.content_frame,
+                text=f"Договор № {contract_id}",
+                font=("Arial", 12, "bold"),
+                padx=10,
+                pady=10
+            )
+            contract_frame.grid(row=row_counter, column=0, sticky="we", pady=5)
+            row_counter += 1
+
+            self.db.cursor.execute(f"""
+                SELECT space.street, space.home, space.floor_, space.apartment, space.rooms_num
+                FROM space
+                JOIN contract ON contract.space_id = space.space_id
+                WHERE contract_id={contract_id}
+            """)
             space = self.db.cursor.fetchone()
-            self.space_label = tk.Label(self.root,
-                                        font=("Arial", 12),
-                                        text=f"Адрес: ул. {space[0]}, д. {space[1]}, эт. {space[2]}, кв. {space[3]}, кол-во комнат: {space[4]}")
-            self.space_label.grid(row=2+cnt, column=0, sticky="nw")
+            
+            tk.Label(
+                contract_frame,
+                text=f"Адрес: ул. {space[0]}, д. {space[1]}, эт. {space[2]}, кв. {space[3]}",
+                font=("Arial", 11)
+            ).grid(row=0, column=0, sticky="w")
+            
+            tk.Label(
+                contract_frame,
+                text=f"Комнат: {space[4]}",
+                font=("Arial", 11)
+            ).grid(row=1, column=0, sticky="w")
 
-            self.db.cursor.execute(f"SELECT conclusion_date FROM contract WHERE contract_id={contract[0]}")
-            conclusion_date = self.db.cursor.fetchone()
-            self.conclusion_date_label = tk.Label(self.root, 
-                                                  font=("Arial", 12),
-                                                  text=f"Дата заключения договора: {conclusion_date[0]}")
-            self.conclusion_date_label.grid(row=3+cnt, column=0, sticky="nw")
+            self.db.cursor.execute(
+                f"SELECT conclusion_date, completion_date FROM contract WHERE contract_id={contract_id}"
+            )
+            dates = self.db.cursor.fetchone()
+            
+            tk.Label(
+                contract_frame,
+                text=f"Дата заключения: {dates[0]}",
+                font=("Arial", 11)
+            ).grid(row=2, column=0, sticky="w")
+            
+            tk.Label(
+                contract_frame,
+                text=f"Дата окончания: {dates[1]}",
+                font=("Arial", 11)
+            ).grid(row=3, column=0, sticky="w")
 
-            self.db.cursor.execute(f"SELECT completion_date FROM contract WHERE contract_id={contract[0]}")
-            completion_date = self.db.cursor.fetchone()
-            self.completion_date_label = tk.Label(self.root, 
-                                                  font=("Arial", 12),
-                                                  text=f"Дата конца договора: {completion_date[0]}")
-            self.completion_date_label.grid(row=4+cnt, column=0, sticky="nw")
+            self.db.cursor.execute(
+                f"SELECT total_coast FROM contract WHERE contract_id={contract_id}"
+            )
+            total_coast = self.db.cursor.fetchone()[0]
+            
+            self.db.cursor.execute(f"""
+                SELECT contract_status.status 
+                FROM contract_status
+                JOIN contract ON contract.contract_status_id = contract_status.contract_status_id
+                WHERE contract_id={contract_id}
+            """)
+            status = self.db.cursor.fetchone()[0]
+            
+            tk.Label(
+                contract_frame,
+                text=f"Общая стоимость: {total_coast} руб.",
+                font=("Arial", 11)
+            ).grid(row=4, column=0, sticky="w")
+            
+            tk.Label(
+                contract_frame,
+                text=f"Статус: {status}",
+                font=("Arial", 11)
+            ).grid(row=5, column=0, sticky="w")
 
-            self.db.cursor.execute(f"SELECT total_coast FROM contract WHERE contract_id={contract[0]}")
-            total_coast = self.db.cursor.fetchone()
-            self.total_coast_label = tk.Label(self.root, 
-                                                  font=("Arial", 12),
-                                                  text=f"Общая стоимость: {total_coast[0]}")
-            self.total_coast_label.grid(row=5+cnt, column=0, sticky="nw")
-
-            self.db.cursor.execute(f"""SELECT contract_status.status FROM contract_status
-                                   JOIN contract ON contract.contract_status_id = contract_status.contract_status_id
-                                   WHERE contract_id={contract[0]}""")
-            status = self.db.cursor.fetchone()
-            self.status_label = tk.Label(self.root, 
-                                        font=("Arial", 12),
-                                        text=f"Статус: {status[0]}")
-            self.status_label.grid(row=6+cnt, column=0, sticky="nw")
-
-            self.db.cursor.execute(f"""SELECT servise.servise_name, works_under_contract.num_of_unit, works_under_contract.coast_for_work
-                                   FROM works_under_contract
-                                   JOIN contract ON works_under_contract.contract_id = contract.contract_id
-                                   JOIN coast_per_unit ON coast_per_unit.coast_per_unit_id = works_under_contract.coast_per_unit_id
-                                   JOIN servise ON servise.servise_id = coast_per_unit.servise_id
-                                   WHERE contract.contract_id={contract[0]}""")
+            self.db.cursor.execute(f"""
+                SELECT 
+                    servise.servise_name, 
+                    works_under_contract.num_of_unit, 
+                    works_under_contract.coast_for_work
+                FROM works_under_contract
+                JOIN contract ON works_under_contract.contract_id = contract.contract_id
+                JOIN coast_per_unit ON coast_per_unit.coast_per_unit_id = works_under_contract.coast_per_unit_id
+                JOIN servise ON servise.servise_id = coast_per_unit.servise_id
+                WHERE contract.contract_id={contract_id}
+            """)
             works = self.db.cursor.fetchall()
-            self.works_table = ttk.Treeview(self.root,
-                                            columns=("Услуга", "Количество", "Стоимость"),
-                                            show="headings")
-            self.works_table.heading("Услуга", text="Услуга")
-            self.works_table.heading("Количество", text="Количество")
-            self.works_table.heading("Стоимость", text="Стоимость")
-            for work in works:
-                servise, num_of_unit, coast = work
-                self.works_table.insert("", "end", values=(servise, num_of_unit, coast))
-            self.works_table.grid(row=7+cnt, column=0, sticky="nw")
+            
+            if works:
+                works_label = tk.Label(
+                    contract_frame,
+                    text="Выполняемые работы:",
+                    font=("Arial", 11, "bold")
+                )
+                works_label.grid(row=6, column=0, sticky="w", pady=(10, 0))
+                
+                works_table = ttk.Treeview(
+                    contract_frame,
+                    columns=("service", "quantity", "cost"),
+                    show="headings",
+                    height=min(len(works), 5)
+                )
+                works_table.heading("service", text="Услуга")
+                works_table.heading("quantity", text="Количество")
+                works_table.heading("cost", text="Стоимость")
+                
+                for work in works:
+                    works_table.insert("", "end", values=work)
+                
+                works_table.grid(row=7, column=0, sticky="we", pady=(0, 10))
+                
+                works_table.column("service", width=300)
+                works_table.column("quantity", width=100, anchor="e")
+                works_table.column("cost", width=150, anchor="e")
+            self.db.connection.commit()
 
-            cnt += 7
-        
     def back(self):
         self.root.destroy()
-        self.root.master.deiconify()
+        self.parent.deiconify()
 
 class AllServises(WindowDefaultSize):
     pass
