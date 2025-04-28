@@ -3,6 +3,11 @@ from tkinter import ttk
 import re
 import psycopg2
 
+# АДМИНИСТРАТОР
+# +7(111) 111-1111
+# admin_cool
+# id 13
+
 WINDOW_DEFAULT_WIDTH = 1420
 WINDOW_DEFAULT_HEIGHT = 780
 
@@ -332,7 +337,10 @@ class SignInWindow(WindowDefaultSize):
             
             if result:
                 self.client_id = result[0]
-                MainWindow(self.root, self.client_id)        
+                if self.client_id == 13:
+                    AdminWindow(self.root, self.client_id)
+                else:
+                    MainWindow(self.root, self.client_id)        
                 self.root.withdraw()
             else:
                 self.error_label = tk.Label(self.root, bg="red", font=("Arial", 12), text="Ошибка: Неверно введены данные!")
@@ -340,6 +348,20 @@ class SignInWindow(WindowDefaultSize):
         
         except Exception as e:
             print("Ошибка при выполнении запроса:", e)
+
+class AdminWindow(WindowDefaultSize):
+    def __init__(self, parent, client_id):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Администратор")
+        super().__init__(self.root)
+
+        BackBtn(self.root, self.back)
+        self.parent = parent
+        self.client_id = client_id
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
 
 class MainWindow(WindowDefaultSize):
     def __init__(self, parent, client_id):
@@ -387,6 +409,14 @@ class MainWindow(WindowDefaultSize):
                                         text="Все заказы",
                                         command=self.select_all_contracts_func)
         self.select_all_contracts_btn.place(x=720, y=50)
+
+        self.unpaid_orders_btn = tk.Button(self.root,
+                                        font=("Arial", 14),
+                                        text="Неоплаченные договоры",
+                                        command=self.select_unpaid_orders_func)
+        self.unpaid_orders_btn.place(x=720, y=100)
+
+
 
     def add_order_func(self):
         self.add_servise_btn = tk.Button(self.root,
@@ -594,13 +624,6 @@ class MainWindow(WindowDefaultSize):
     def order_confirmation_func(self):
         print(f"Вы выбрали: Поверхность={self.surface_selected}, Услуга={self.servise_selected}, Стоимость={self.coast_for_work}")
 
-        # выбранные атрибуты будут добавляться в массив (или список). после уже полного создания заказа данные окажутся в БД
-        # будут добавляться в works_under_contract. 
-        # contract_id реализуется позже
-        # coast_per_unit_id будет хранить id, выбираемый по surface_id(self.surface_id) и servise_id(servise_id)
-        # num_of_unit будет хранить self.selected_num_of_unit
-        # coast_for_work будет хранить self.coast_for_work
-
         self.db.cursor.execute("SELECT coast_per_unit_id FROM coast_per_unit WHERE surface_id=%s AND servise_id=%s", 
                                (self.surface_id, self.servise_id))
         self.coast_per_unit_id = self.db.cursor.fetchone()
@@ -733,10 +756,10 @@ class MainWindow(WindowDefaultSize):
         space_id = self.db.cursor.fetchone()[0]
         total_coast = sum(servise['coast_for_work'] for servise in self.chosen_services)
 
-        self.db.cursor.execute("""INSERT INTO contract (client_id, space_id, total_coast)
-                               VALUES (%s, %s, %s)
+        self.db.cursor.execute("""INSERT INTO contract (client_id, space_id, total_coast, contract_status_id)
+                               VALUES (%s, %s, %s, %s)
                                RETURNING contract_id""",
-                               (self.client_id, space_id, total_coast,))
+                               (self.client_id, space_id, total_coast, 1))
         self.db.connection.commit()
         contract_id = self.db.cursor.fetchone()[0]
 
@@ -783,6 +806,9 @@ class MainWindow(WindowDefaultSize):
         
     def select_all_contracts_func(self):
         AllContractsWindow(self.root, self.client_id, self.coast_per_unit_id)
+
+    def select_unpaid_orders_func(self):
+        UnpaidOrdersWindow(self.root, self.client_id)
 
     def back(self):
         self.root.destroy()
@@ -962,6 +988,88 @@ class AllContractsWindow:
                 works_table.column("quantity", width=100, anchor="e")
                 works_table.column("cost", width=150, anchor="e")
             self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.parent.deiconify()
+
+class UnpaidOrdersWindow:
+    def __init__(self, parent, client_id):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Ремонт помещений. Неоплаченные договоры")
+        self.root.geometry("1000x600")
+        
+        self.parent = parent
+        self.client_id = client_id
+        self.db = DbConnection()
+
+        self.back_button = tk.Button(self.root, 
+                                   text="Назад", 
+                                   command=self.back,
+                                   font=("Arial", 12))
+        self.back_button.pack(anchor="nw", pady=(0, 10))
+
+        self.db.cursor.execute(f"SELECT contract_id FROM contract WHERE client_id={self.client_id} AND contract_status_id=1")
+        unpaid_orders = self.db.cursor.fetchall()
+
+        if unpaid_orders == []:
+            self.no_unpaid_orders_label = tk.Label(self.root,
+                                              text="У Вас нет неоплаченных договоров",
+                                              font=("Arial", 12))
+            self.no_unpaid_orders_label.pack(anchor="nw", pady=(0, 30))
+        else:
+            cnt = 0
+
+            self.pay_button = tk.Button(self.root, 
+                                   text="Оплатить", 
+                                   command=self.pay_func,
+                                   font=("Arial", 12),
+                                   bg="green")
+            self.pay_button.pack(anchor="nw", pady=(10, 30))
+
+            self.db.cursor.execute(f"SELECT contract_id FROM contract WHERE contract_status_id=1 AND client_id={self.client_id}")
+            unpaid_contracts = self.db.cursor.fetchall()
+            for contract in unpaid_contracts:
+                self.db.cursor.execute(f"""SELECT contract.contract_id, space.street, space.home, space.floor_,
+                                    space.apartment, space.rooms_num, contract.conclusion_date,  contract.total_coast
+                                    FROM contract
+                                    JOIN space ON contract.space_id = space.space_id
+                                    WHERE contract.contract_id={contract[0]}""")
+                unpaid_contracts_table = self.db.cursor.fetchall()
+                for tuple_unpaid_contract in unpaid_contracts_table:
+                    contract_id, street, home, floor_, apartment, rooms_num, conclusion_date, total_coast = tuple_unpaid_contract
+
+                    unpaid_contracts_table_view = ttk.Treeview(self.root,
+                                                               columns=("contract_id", "street", "home", "floor_", "apartment", 
+                                                                        "rooms_num", "conclusion_date", "total_coast"),
+                                                                        show="headings",
+                                                                        height=1)
+                    unpaid_contracts_table_view.heading("contract_id", text="Номер договора")
+                    unpaid_contracts_table_view.heading("street", text="Улица")
+                    unpaid_contracts_table_view.heading("home", text="Дом")
+                    unpaid_contracts_table_view.heading("floor_", text="Этаж")
+                    unpaid_contracts_table_view.heading("apartment", text="Квартира")
+                    unpaid_contracts_table_view.heading("rooms_num", text="Количество комнат")
+                    unpaid_contracts_table_view.heading("conclusion_date", text="Дата заключения")
+                    unpaid_contracts_table_view.heading("total_coast", text="Итоговая стоимость")
+
+                    unpaid_contracts_table_view.insert("", "end", 
+                                                       values=(contract_id, street, home, floor_, apartment, rooms_num, conclusion_date, total_coast))
+                    unpaid_contracts_table_view.pack(anchor="nw", pady=(0, 30+cnt))
+
+                    unpaid_contracts_table_view.column("contract_id", width=100)
+                    unpaid_contracts_table_view.column("street", width=100)
+                    unpaid_contracts_table_view.column("home", width=100)
+                    unpaid_contracts_table_view.column("floor_", width=100)
+                    unpaid_contracts_table_view.column("apartment", width=100)
+                    unpaid_contracts_table_view.column("rooms_num", width=150)
+                    unpaid_contracts_table_view.column("conclusion_date", width=150)
+                    unpaid_contracts_table_view.column("total_coast", width=150)
+                    cnt += 10
+    
+    def pay_func(self):
+        pass
+        
 
     def back(self):
         self.root.destroy()
