@@ -1,12 +1,32 @@
 import customtkinter as ctk
 import psycopg2
 
+class DbConnection:
+    def __init__(self):
+        try:
+            self.connection = psycopg2.connect(
+                dbname='postgres', 
+                user='postgres', 
+                host='localhost', 
+                password='MH0375KCHA8',
+                port='5432',
+                client_encoding='win1251'
+            )
+
+            self.cursor = self.connection.cursor()
+
+        except Exception as error:
+            print("Error while connecting to PostgreSQL", error)
+
+    def __del__(self):
+        if hasattr(self, 'connection'):
+            self.connection.close()
+
 class WindowDefaultSize:
     def __init__(self, app):
         self.app = app
         app.geometry("1000x550")
         ctk.set_appearance_mode("light")
-
 
 class MainWindow(WindowDefaultSize):
     def __init__(self, app):
@@ -29,6 +49,8 @@ class addMedicineWindow(WindowDefaultSize):
         self.parent = parent
         self.app = ctk.CTkToplevel(parent)
         super().__init__(self.app)
+
+        self.db = DbConnection()
 
         self.app.title("Медицинский центр. Добавить препарат")
 
@@ -95,12 +117,46 @@ class addMedicineWindow(WindowDefaultSize):
         self.app.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def confirmAddMedicineFunc(self):
-        pass
+        self.db.cursor.execute("""INSERT INTO Storage_conditions (min_temperature, max_temperature, lighting, humidity) 
+                               VALUES (%s, %s, %s, %s)
+                               RETURNING id_storage_conditions""", 
+                               (self.MinTemperatureEntry.get(), self.MaxTemperatureEntry.get(), 
+                               self.LightingMenu.get(), self.HumidityEntry.get()))
+        id_storage_conditions = self.db.cursor.fetchone()[0]
+        self.db.connection.commit()
+
+        self.db.cursor.execute("""INSERT INTO Medicine (id_storage_conditions, INN, trade_name, control_level, form_release, dosage)
+                               VALUES (%s, %s, %s, %s, %s, %s)""", 
+                               (id_storage_conditions, self.InnEntry.get(), 
+                               self.TradeNameEntry.get(), self.controlLevelMenu.get(),
+                               self.FormReleaseMenu.get(), self.DosageEntry.get()))
+        self.db.connection.commit()
+
+        SuccessWindow(self.app)
+        self.app.withdraw()
 
     def on_close(self):
         self.parent.deiconify()
         self.app.destroy()
         
+class SuccessWindow:
+    def __init__(self, parent):
+        self.parent = parent
+        self.app = ctk.CTkToplevel(parent)
+        self.app.title("Успешно!")
+        self.app.geometry("300x150")
+
+        self.SuccessLabel = ctk.CTkLabel(self.app, 
+                                         text="Успешно!", 
+                                         bg_color="#61c671")
+        self.SuccessLabel.grid(row=0, column=0, ipadx=8, ipady=8)
+
+        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.parent.deiconify()
+        self.app.destroy()
+
 if __name__ == "__main__":
     app = ctk.CTk()
     MainWindow(app)
