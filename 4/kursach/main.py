@@ -1,4 +1,6 @@
 import customtkinter as ctk
+from tkinter import messagebox
+from CTkTable import *
 import psycopg2
 
 DEFAULT_COLOR = "#2262b3"
@@ -164,8 +166,12 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
         self.AddProducerButton.grid(row=0, column=2, padx=20, pady=20, ipadx=20, ipady=20)
 
     def ChooseProducerFunc(self):
-        ChooseProducerWindow(self.app)
+        chooser = ChooseProducerWindow(self.app)
         self.app.withdraw()
+        self.app.wait_window(chooser.app)
+        if chooser.selected_producer:
+            self.producer = chooser.selected_producer
+            print(f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}")
 
     def AddProducerFunc(self):
         AddProducerWindow(self.app)
@@ -175,6 +181,68 @@ class ChooseProducerWindow(WindowDefaultSettings):
     def __init__(self, parent):
         super().__init__(parent)
         self.app.title("Выбор производителя")
+
+        self.db.cursor.execute("SELECT * FROM Producer")
+        self.producers_data = self.db.cursor.fetchall()
+
+        main_frame = ctk.CTkFrame(self.app)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        scroll_frame = ctk.CTkScrollableFrame(main_frame)
+        scroll_frame.pack(fill="both", expand=True)
+
+        headers_frame = ctk.CTkFrame(scroll_frame)
+        headers_frame.pack(fill="x")
+        
+        ctk.CTkLabel(headers_frame, text="Название", width=200, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Страна", width=150, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Контакты", width=300, anchor="w").pack(side="left", padx=5)
+
+        self.producer_frames = []
+        for i, producer in enumerate(self.producers_data):
+            frame = ctk.CTkFrame(scroll_frame)
+            frame.pack(fill="x", pady=2)
+
+            ctk.CTkLabel(frame, text=producer[1], width=200, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=producer[2], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=producer[3], width=300, anchor="w").pack(side="left", padx=5)
+
+            frame.bind("<Button-1>", lambda e, idx=i: self._on_row_click(idx))
+            for child in frame.winfo_children():
+                child.bind("<Button-1>", lambda e, idx=i: self._on_row_click(idx))
+            
+            self.producer_frames.append(frame)
+
+        select_button = ctk.CTkButton(
+            main_frame,
+            text="Выбрать",
+            command=self._on_select,
+            fg_color=DEFAULT_COLOR,
+            height=40,
+            font=("Arial", 14)
+        )
+        select_button.pack(pady=10)
+        
+        self.selected_index = None
+    
+    def _on_row_click(self, index):
+        for i, frame in enumerate(self.producer_frames):
+            frame.configure(fg_color="transparent")
+
+        self.producer_frames[index].configure(fg_color="#1F6AA5")
+        self.selected_index = index
+    
+    def _on_select(self):
+        if self.selected_index is None:
+            messagebox.showwarning("Выбор", "Пожалуйста, выберите производителя из списка")
+            return 
+        try:
+            self.selected_producer = self.producers_data[self.selected_index]
+            self.parent.deiconify()
+            self.app.destroy()
+
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при выборе: {str(e)}")
 
 class AddProducerWindow(WindowDefaultSettings):
     def __init__(self, parent):
