@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkintertable.Tables import TableCanvas
-from tkintertable.TableModels import TableModel
+from tkintertable.TableModels import TableModel 
 
 class Application(Frame):
     def __init__(self, master=None):
