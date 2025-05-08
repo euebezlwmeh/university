@@ -48,13 +48,13 @@ class MainWindow:
                                        text="Добавить препарат",
                                        fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineFunc)
-        self.addMedicineBtn.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20)
+        self.addMedicineBtn.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
 
         self.addMedicineBatchBtn = ctk.CTkButton(self.app, 
                                        text="Добавить партию препарата",
                                        fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineBatchFunc)
-        self.addMedicineBatchBtn.grid(row=1, column=0, padx=20, pady=20, ipadx=20, ipady=20)
+        self.addMedicineBatchBtn.grid(row=1, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
 
     def addMedicineFunc(self):
         self.app.withdraw()
@@ -154,16 +154,16 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
                                               text="Выбрать производителя", 
                                               fg_color=DEFAULT_COLOR, 
                                               command=self.ChooseProducerFunc)
-        self.ChooseProducerButton.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20)
+        self.ChooseProducerButton.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
 
         self.OrLabel = ctk.CTkLabel(self.app, text="Или")
-        self.OrLabel.grid(row=0, column=1, padx=20, pady=5)
+        self.OrLabel.grid(row=1, column=0, padx=20, pady=5, sticky="w")
 
         self.AddProducerButton = ctk.CTkButton(self.app, 
                                            text="Добавить производителя", 
                                            fg_color=DEFAULT_COLOR, 
                                            command=self.AddProducerFunc)
-        self.AddProducerButton.grid(row=0, column=2, padx=20, pady=20, ipadx=20, ipady=20)
+        self.AddProducerButton.grid(row=2, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
 
     def ChooseProducerFunc(self):
         chooser = ChooseProducerWindow(self.app)
@@ -171,11 +171,18 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
         self.app.wait_window(chooser.app)
         if chooser.selected_producer:
             self.producer = chooser.selected_producer
-            print(f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}")
+            self.SelectProducer = ctk.CTkLabel(self.app, text=f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}")
+            self.SelectProducer.grid(row=3, column=0, padx=20, sticky="w")
 
     def AddProducerFunc(self):
-        AddProducerWindow(self.app)
+        add = AddProducerWindow(self.app)
         self.app.withdraw()
+        self.app.wait_window(add.app)
+        if add.added_producer:
+            self.db.cursor.execute("SELECT * FROM producer WHERE id_producer=%s", add.added_producer)
+            self.producer = self.db.cursor.fetchone()
+            self.AddProducer = ctk.CTkLabel(self.app, text=f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}")
+            self.AddProducer.grid(row=3, column=0, padx=20, sticky="w")
 
 class ChooseProducerWindow(WindowDefaultSettings):
     def __init__(self, parent):
@@ -268,6 +275,12 @@ class AddProducerWindow(WindowDefaultSettings):
         self.AddProducerButton.grid(row=3, column=0, ipadx=8, ipady=8, sticky="e")
 
     def AddProducerFunc(self):
+
+        self.db.cursor.execute("""INSERT INTO Producer(name_, country, contacts)
+                        VALUES (%s, %s, %s) RETURNING id_producer""", 
+                        (self.ProducerNameEntry.get(), self.ProducerCountryEntry.get(), self.ProducerContactsEntry.get()))
+        self.added_producer = self.db.cursor.fetchone()
+        self.db.connection.commit()
         self.parent.deiconify()
         self.app.destroy()
 
