@@ -1,6 +1,7 @@
 -- Регистрация новых лекарственных препаратов 
 INSERT INTO Storage_conditions (min_temperature, max_temperature, lighting, humidity)
 VALUES (2, 25, 'Ограниченное', 40)
+RETURNING id_storage_conditions
 
 INSERT INTO Medicine (id_storage_conditions, INN, trade_name, control_level, form_release, dosage)
 VALUES (1, 'Парацетамол', 'Парацетамол Реневал', 'Общий', 'Таблетки', 500)
@@ -8,6 +9,7 @@ VALUES (1, 'Парацетамол', 'Парацетамол Реневал', '�
 -- Регистрация новых партий лекарственных препаратов 
 INSERT INTO Producer(name_, country, contacts)
 VALUES ('Треугольник', 'Российская Федерация', 'treugolnik@mail.ru')
+RETURNING id_producer
 
 INSERT INTO Medicine_batch (id_medicine, id_producer, series, production_date, expiration_date, count)
 VALUES (1, 1, 1000, '2025-01-20', '2028-01-20', 200)
