@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import psycopg2
 
+DEFAULT_COLOR = "#2262b3"
+
 class DbConnection:
     def __init__(self):
         try:
@@ -36,12 +38,22 @@ class MainWindow(WindowDefaultSize):
 
         self.addMedicineBtn = ctk.CTkButton(self.app, 
                                        text="Добавить препарат",
-                                       bg_color="#5eb481",  
+                                       fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineFunc)
-        self.addMedicineBtn.pack(anchor="nw", padx=20, pady=20)
+        self.addMedicineBtn.grid(row=0, column=0, ipadx=20, ipady=20)
+
+        self.addMedicineBatchBtn = ctk.CTkButton(self.app, 
+                                       text="Добавить партию препарата",
+                                       fg_color=DEFAULT_COLOR,  
+                                       command=self.addMedicineBatchFunc)
+        self.addMedicineBatchBtn.grid(row=1, column=0, ipadx=20, ipady=20)
 
     def addMedicineFunc(self):
         addMedicineWindow(self.app)
+        self.app.withdraw()
+
+    def addMedicineBatchFunc(self):
+        AddMedicineBatchWindow(self.app)
         self.app.withdraw()
 
 class addMedicineWindow(WindowDefaultSize):
@@ -110,7 +122,7 @@ class addMedicineWindow(WindowDefaultSize):
 
         self.confirmAddMedicineBtn = ctk.CTkButton(self.app, 
                                                    text="Подтвердить", 
-                                                   bg_color="#5eb481", 
+                                                   fg_color=DEFAULT_COLOR, 
                                                    command=self.confirmAddMedicineFunc)
         self.confirmAddMedicineBtn.grid(row=9, column=1, ipadx=8, ipady=8)
 
@@ -138,7 +150,37 @@ class addMedicineWindow(WindowDefaultSize):
     def on_close(self):
         self.parent.deiconify()
         self.app.destroy()
+
+class AddMedicineBatchWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.parent = parent
+        self.app = ctk.CTkToplevel(parent)
+        super().__init__(self.app)
+        self.app.title("Медицинский центр. Добавить партию препарата")
+
+        self.ProducerNameLabel = ctk.CTkLabel(self.app, text="Добавить название производителя")
+        self.ProducerNameLabel.grid(row=0, column=0, ipadx=8, ipady=8, sticky="e")
+        self.ProducerNameEntry = ctk.CTkEntry(self.app)
+        self.ProducerNameEntry.grid(row=0, column=1, ipadx=8, ipady=8, sticky="e")
+
+        self.ProducerCountryLabel = ctk.CTkLabel(self.app, text="Добавить страну производителя")
+        self.ProducerCountryLabel.grid(row=1, column=0, ipadx=8, ipady=8, sticky="e")
+        self.ProducerCountryEntry = ctk.CTkEntry(self.app)
+        self.ProducerCountryEntry.grid(row=1, column=1, ipadx=8, ipady=8, sticky="e")
+
+        self.ProducerContactsLabel = ctk.CTkLabel(self.app, text="Добавить контакты производителя")
+        self.ProducerContactsLabel.grid(row=2, column=0, ipadx=8, ipady=8, sticky="e")
+        self.ProducerContactsEntry = ctk.CTkEntry(self.app)
+        self.ProducerContactsEntry.grid(row=2, column=1, ipadx=8, ipady=8, sticky="e")
+
         
+
+        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.parent.deiconify()
+        self.app.destroy()
+
 class SuccessWindow:
     def __init__(self, parent):
         self.parent = parent
