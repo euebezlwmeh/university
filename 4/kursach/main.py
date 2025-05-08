@@ -14,9 +14,7 @@ class DbConnection:
                 port='5432',
                 client_encoding='win1251'
             )
-
             self.cursor = self.connection.cursor()
-
         except Exception as error:
             print("Error while connecting to PostgreSQL", error)
 
@@ -24,109 +22,107 @@ class DbConnection:
         if hasattr(self, 'connection'):
             self.connection.close()
 
-class WindowDefaultSize:
+class WindowDefaultSettings:
+    def __init__(self, parent):
+        self.parent = parent
+        self.app = ctk.CTkToplevel(parent)
+        self.app.geometry("1000x550")
+        ctk.set_appearance_mode("light")
+        self.db = DbConnection()
+        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def on_close(self):
+        self.parent.deiconify()
+        self.app.destroy()
+
+class MainWindow:
     def __init__(self, app):
         self.app = app
-        app.geometry("1000x550")
-        ctk.set_appearance_mode("light")
-
-class MainWindow(WindowDefaultSize):
-    def __init__(self, app):
-        super().__init__(app)
-        
         self.app.title("Медицинский центр. Главная")
-
+        self.app.geometry("1000x550")
+        ctk.set_appearance_mode("light")
+        
         self.addMedicineBtn = ctk.CTkButton(self.app, 
                                        text="Добавить препарат",
                                        fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineFunc)
-        self.addMedicineBtn.grid(row=0, column=0, ipadx=20, ipady=20)
+        self.addMedicineBtn.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20)
 
         self.addMedicineBatchBtn = ctk.CTkButton(self.app, 
                                        text="Добавить партию препарата",
                                        fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineBatchFunc)
-        self.addMedicineBatchBtn.grid(row=1, column=0, ipadx=20, ipady=20)
+        self.addMedicineBatchBtn.grid(row=1, column=0, padx=20, pady=20, ipadx=20, ipady=20)
 
     def addMedicineFunc(self):
-        addMedicineWindow(self.app)
         self.app.withdraw()
+        AddMedicineWindow(self.app)
 
     def addMedicineBatchFunc(self):
-        AddMedicineBatchWindow(self.app)
         self.app.withdraw()
+        AddMedicineBatchWindow(self.app)
 
-class addMedicineWindow(WindowDefaultSize):
+class AddMedicineWindow(WindowDefaultSettings):
     def __init__(self, parent):
-        self.parent = parent
-        self.app = ctk.CTkToplevel(parent)
-        super().__init__(self.app)
-
-        self.db = DbConnection()
-
+        super().__init__(parent)
         self.app.title("Медицинский центр. Добавить препарат")
 
         self.DosageLabel = ctk.CTkLabel(self.app, text="Введите МНН:")
-        self.DosageLabel.grid(row=0, column=0, ipadx=8, ipady=8, sticky="e")
+        self.DosageLabel.grid(row=0, column=0, padx=8, pady=8, sticky="e")
         self.InnEntry = ctk.CTkEntry(self.app)
-        self.InnEntry.grid(row=0, column=1, ipadx=8, ipady=8)
+        self.InnEntry.grid(row=0, column=1, padx=8, pady=8)
 
         self.TradeNameLabel = ctk.CTkLabel(self.app, text="Введите торговое\n название:")
-        self.TradeNameLabel.grid(row=1, column=0, ipadx=8, ipady=8, sticky="e")
+        self.TradeNameLabel.grid(row=1, column=0, padx=8, pady=8, sticky="e")
         self.TradeNameEntry = ctk.CTkEntry(self.app)
-        self.TradeNameEntry.grid(row=1, column=1, ipadx=8, ipady=8)
+        self.TradeNameEntry.grid(row=1, column=1, padx=8, pady=8)
 
         controlLevelArr = ["Общий", "Психотропный", "Наркотический"]
 
         self.controlLevelLabel = ctk.CTkLabel(self.app, text="Введите уровень\n контроля:")
-        self.controlLevelLabel.grid(row=2, column=0, ipadx=8, ipady=8, sticky="e")
-        self.controlLevelMenu= ctk.CTkOptionMenu(self.app, 
-                                                 values=controlLevelArr)
-        self.controlLevelMenu.grid(row=2, column=1, ipadx=8, ipady=8)
+        self.controlLevelLabel.grid(row=2, column=0, padx=8, pady=8, sticky="e")
+        self.controlLevelMenu = ctk.CTkOptionMenu(self.app, values=controlLevelArr)
+        self.controlLevelMenu.grid(row=2, column=1, padx=8, pady=8)
 
         formReleaseArr = ["Таблетки", "Гранулы", "Порошки", "Пилюли", "Мазь", "Раствор", "Настойка", "Микстура", "Капли"]
 
         self.FormReleaseLabel = ctk.CTkLabel(self.app, text="Введите форму выпуска:")
-        self.FormReleaseLabel.grid(row=3, column=0, ipadx=8, ipady=8, sticky="e")
-        self.FormReleaseMenu = ctk.CTkOptionMenu(self.app, 
-                                                 values=formReleaseArr)
-        self.FormReleaseMenu.grid(row=3, column=1, ipadx=8, ipady=8)
+        self.FormReleaseLabel.grid(row=3, column=0, padx=8, pady=8, sticky="e")
+        self.FormReleaseMenu = ctk.CTkOptionMenu(self.app, values=formReleaseArr)
+        self.FormReleaseMenu.grid(row=3, column=1, padx=8, pady=8)
 
         self.DosageLabel = ctk.CTkLabel(self.app, text="Введите дозировку:")
-        self.DosageLabel.grid(row=4, column=0, ipadx=8, ipady=8, sticky="e")
+        self.DosageLabel.grid(row=4, column=0, padx=8, pady=8, sticky="e")
         self.DosageEntry = ctk.CTkEntry(self.app)
-        self.DosageEntry.grid(row=4, column=1, ipadx=8, ipady=8)
+        self.DosageEntry.grid(row=4, column=1, padx=8, pady=8)
 
         self.MinTemperatureLabel = ctk.CTkLabel(self.app, text="Введите минимальную\n температуру хранения:")
-        self.MinTemperatureLabel.grid(row=5, column=0, ipadx=8, ipady=8, sticky="e")
+        self.MinTemperatureLabel.grid(row=5, column=0, padx=8, pady=8, sticky="e")
         self.MinTemperatureEntry = ctk.CTkEntry(self.app)
-        self.MinTemperatureEntry.grid(row=5, column=1, ipadx=8, ipady=8)
+        self.MinTemperatureEntry.grid(row=5, column=1, padx=8, pady=8)
 
         self.MaxTemperatureLabel = ctk.CTkLabel(self.app, text="Введите максимальную\n температуру хранения:")
-        self.MaxTemperatureLabel.grid(row=6, column=0, ipadx=8, ipady=8, sticky="e")
+        self.MaxTemperatureLabel.grid(row=6, column=0, padx=8, pady=8, sticky="e")
         self.MaxTemperatureEntry = ctk.CTkEntry(self.app)
-        self.MaxTemperatureEntry.grid(row=6, column=1, ipadx=8, ipady=8)
+        self.MaxTemperatureEntry.grid(row=6, column=1, padx=8, pady=8)
 
         lightingArr = ["Тёмное", "Ограниченное", "Не чувствителен", "Требуется"]
 
         self.LightingLabel = ctk.CTkLabel(self.app, text="Введите необходимое\n освещение:")
-        self.LightingLabel.grid(row=7, column=0, ipadx=8, ipady=8, sticky="e")
-        self.LightingMenu = ctk.CTkOptionMenu(self.app, 
-                                                 values=lightingArr)
-        self.LightingMenu.grid(row=7, column=1, ipadx=8, ipady=8)
+        self.LightingLabel.grid(row=7, column=0, padx=8, pady=8, sticky="e")
+        self.LightingMenu = ctk.CTkOptionMenu(self.app, values=lightingArr)
+        self.LightingMenu.grid(row=7, column=1, padx=8, pady=8)
 
         self.HumidityLabel = ctk.CTkLabel(self.app, text="Введите влажность\n хранения:")
-        self.HumidityLabel.grid(row=8, column=0, ipadx=8, ipady=8, sticky="e")
+        self.HumidityLabel.grid(row=8, column=0, padx=8, pady=8, sticky="e")
         self.HumidityEntry = ctk.CTkEntry(self.app)
-        self.HumidityEntry.grid(row=8, column=1, ipadx=8, ipady=8)
+        self.HumidityEntry.grid(row=8, column=1, padx=8, pady=8)
 
         self.confirmAddMedicineBtn = ctk.CTkButton(self.app, 
-                                                   text="Подтвердить", 
-                                                   fg_color=DEFAULT_COLOR, 
-                                                   command=self.confirmAddMedicineFunc)
-        self.confirmAddMedicineBtn.grid(row=9, column=1, ipadx=8, ipady=8)
-
-        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
+                                               text="Подтвердить", 
+                                               fg_color=DEFAULT_COLOR, 
+                                               command=self.confirmAddMedicineFunc)
+        self.confirmAddMedicineBtn.grid(row=9, column=1, padx=8, pady=8)
 
     def confirmAddMedicineFunc(self):
         self.db.cursor.execute("""INSERT INTO Storage_conditions (min_temperature, max_temperature, lighting, humidity) 
@@ -145,18 +141,45 @@ class addMedicineWindow(WindowDefaultSize):
         self.db.connection.commit()
 
         SuccessWindow(self.app)
-        self.app.withdraw()
-
-    def on_close(self):
-        self.parent.deiconify()
         self.app.destroy()
 
-class AddMedicineBatchWindow(WindowDefaultSize):
+class AddMedicineBatchWindow(WindowDefaultSettings):
     def __init__(self, parent):
-        self.parent = parent
-        self.app = ctk.CTkToplevel(parent)
-        super().__init__(self.app)
+        super().__init__(parent)
         self.app.title("Медицинский центр. Добавить партию препарата")
+
+        self.ChooseProducerButton = ctk.CTkButton(self.app, 
+                                              text="Выбрать производителя", 
+                                              fg_color=DEFAULT_COLOR, 
+                                              command=self.ChooseProducerFunc)
+        self.ChooseProducerButton.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20)
+
+        self.OrLabel = ctk.CTkLabel(self.app, text="Или")
+        self.OrLabel.grid(row=0, column=1, padx=20, pady=5)
+
+        self.AddProducerButton = ctk.CTkButton(self.app, 
+                                           text="Добавить производителя", 
+                                           fg_color=DEFAULT_COLOR, 
+                                           command=self.AddProducerFunc)
+        self.AddProducerButton.grid(row=0, column=2, padx=20, pady=20, ipadx=20, ipady=20)
+
+    def ChooseProducerFunc(self):
+        ChooseProducerWindow(self.app)
+        self.app.withdraw()
+
+    def AddProducerFunc(self):
+        AddProducerWindow(self.app)
+        self.app.withdraw()
+
+class ChooseProducerWindow(WindowDefaultSettings):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.app.title("Выбор производителя")
+
+class AddProducerWindow(WindowDefaultSettings):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.app.title("Добавление производителя")
 
         self.ProducerNameLabel = ctk.CTkLabel(self.app, text="Добавить название производителя")
         self.ProducerNameLabel.grid(row=0, column=0, ipadx=8, ipady=8, sticky="e")
@@ -173,11 +196,10 @@ class AddMedicineBatchWindow(WindowDefaultSize):
         self.ProducerContactsEntry = ctk.CTkEntry(self.app)
         self.ProducerContactsEntry.grid(row=2, column=1, ipadx=8, ipady=8, sticky="e")
 
-        
+        self.AddProducerButton = ctk.CTkButton(self.app, text="Добавить производителя", fg_color=DEFAULT_COLOR, command=self.AddProducerFunc)
+        self.AddProducerButton.grid(row=3, column=0, ipadx=8, ipady=8, sticky="e")
 
-        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
-
-    def on_close(self):
+    def AddProducerFunc(self):
         self.parent.deiconify()
         self.app.destroy()
 
@@ -188,18 +210,15 @@ class SuccessWindow:
         self.app.title("Успешно!")
         self.app.geometry("300x150")
 
-        self.SuccessLabel = ctk.CTkLabel(self.app, 
-                                         text="Успешно!", 
-                                         bg_color="#61c671")
-        self.SuccessLabel.grid(row=0, column=0, ipadx=8, ipady=8)
+        self.SuccessLabel = ctk.CTkLabel(self.app, text="Успешно!", bg_color="#61c671")
+        self.SuccessLabel.pack(pady=40)
 
         self.app.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def on_close(self):
-        self.parent.deiconify()
         self.app.destroy()
 
 if __name__ == "__main__":
     app = ctk.CTk()
-    MainWindow(app)
+    main_window = MainWindow(app)
     app.mainloop()
