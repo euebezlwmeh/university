@@ -40,7 +40,7 @@ class WindowDefaultSettings:
 class MainWindow:
     def __init__(self, app):
         self.app = app
-        self.app.title("Медицинский центр. Главная")
+        self.app.title("Главная")
         self.app.geometry("1000x550")
         ctk.set_appearance_mode("light")
 
@@ -79,7 +79,7 @@ class MainWindow:
 class AddMedicineWindow(WindowDefaultSettings):
     def __init__(self, parent):
         super().__init__(parent)
-        self.app.title("Медицинский центр. Добавить препарат")
+        self.app.title("Добавить препарат")
 
         self.DosageLabel = ctk.CTkLabel(self.app, text="Введите МНН:")
         self.DosageLabel.grid(row=0, column=0, padx=8, pady=8, sticky="e")
@@ -161,7 +161,7 @@ class AddMedicineWindow(WindowDefaultSettings):
 class AddMedicineBatchWindow(WindowDefaultSettings):
     def __init__(self, parent):
         super().__init__(parent)
-        self.app.title("Медицинский центр. Добавить партию препарата")
+        self.app.title("Добавить партию препарата")
 
         self.app.grid_columnconfigure(0, weight=1)
 
@@ -361,7 +361,7 @@ class AddProducerWindow(WindowDefaultSettings):
 class ChooseMedicineWindow(WindowDefaultSettings):
     def __init__(self, parent):
         super().__init__(parent)
-        self.app.title("Медицинский центр. Выбор препарата")
+        self.app.title("Выбор препарата")
 
         self.db.cursor.execute("SELECT * FROM medicine")
         self.AllMedicines = self.db.cursor.fetchall()
@@ -435,7 +435,7 @@ class BatchWritingOffWindow(WindowDefaultSettings):
 
         self.app.grid_columnconfigure(0, weight=1)
 
-        self.app.title("Медицинский центр. Списание препаратов из партии")
+        self.app.title("Списание препаратов из партии")
 
         self.BatchWritingOffButton = ctk.CTkButton(self.app,
                                                 text="Выбрать партию препарата",
