@@ -4,6 +4,8 @@ from CTkTable import *
 import psycopg2
 
 DEFAULT_COLOR = "#2262b3"
+DEFAULT_BUTTON_WIDTH = 1
+DEFAULT_BUTTON_HEIGHT = 1
 
 class DbConnection:
     def __init__(self):
@@ -152,7 +154,9 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
 
         self.ChooseProducerButton = ctk.CTkButton(self.app, 
                                               text="Выбрать производителя", 
-                                              fg_color=DEFAULT_COLOR, 
+                                              fg_color=DEFAULT_COLOR,
+                                              width = DEFAULT_BUTTON_WIDTH,
+                                              height = DEFAULT_BUTTON_HEIGHT,
                                               command=self.ChooseProducerFunc)
         self.ChooseProducerButton.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
 
@@ -161,28 +165,55 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
 
         self.AddProducerButton = ctk.CTkButton(self.app, 
                                            text="Добавить производителя", 
-                                           fg_color=DEFAULT_COLOR, 
+                                           fg_color=DEFAULT_COLOR,
+                                           width = DEFAULT_BUTTON_WIDTH,
+                                           height = DEFAULT_BUTTON_HEIGHT, 
                                            command=self.AddProducerFunc)
         self.AddProducerButton.grid(row=2, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
 
+        self.SelectProducerLabelText = "Выберите производителя"
+        self.SelectProducerLabel = ctk.CTkLabel(self.app, text=f"Производитель: {self.SelectProducerLabelText}")
+        self.SelectProducerLabel.grid(row=3, column=0, padx=20, sticky="w")
+
+        self.ChooseMedicineButton = ctk.CTkButton(self.app,
+                                                text="Выбрать препарат", 
+                                                fg_color=DEFAULT_COLOR,
+                                                width = DEFAULT_BUTTON_WIDTH,
+                                                height = DEFAULT_BUTTON_HEIGHT,
+                                                command=self.ChooseMedicineFunc)
+        self.ChooseMedicineButton.grid(row=4, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
+
+        self.SelectMedicineLabelText = "Выберите препарат"
+        self.SelectMedicineLabel = ctk.CTkLabel(self.app, text=f"Препарат: {self.SelectMedicineLabelText}")
+        self.SelectMedicineLabel.grid(row=5, column=0, padx=20, sticky="w")
+
     def ChooseProducerFunc(self):
-        chooser = ChooseProducerWindow(self.app)
+        chooserWindow = ChooseProducerWindow(self.app)
         self.app.withdraw()
-        self.app.wait_window(chooser.app)
-        if chooser.selected_producer:
-            self.producer = chooser.selected_producer
-            self.SelectProducer = ctk.CTkLabel(self.app, text=f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}")
-            self.SelectProducer.grid(row=3, column=0, padx=20, sticky="w")
+        self.app.wait_window(chooserWindow.app)
+        if chooserWindow.selected_producer:
+            self.producer = chooserWindow.selected_producer
+            self.SelectProducerLabelText = f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}"
+            self.SelectProducerLabel.configure(text=self.SelectProducerLabelText)
 
     def AddProducerFunc(self):
-        add = AddProducerWindow(self.app)
+        addWindow = AddProducerWindow(self.app)
         self.app.withdraw()
-        self.app.wait_window(add.app)
-        if add.added_producer:
-            self.db.cursor.execute("SELECT * FROM producer WHERE id_producer=%s", add.added_producer)
+        self.app.wait_window(addWindow.app)
+        if addWindow.added_producer:
+            self.db.cursor.execute("SELECT * FROM producer WHERE id_producer=%s", addWindow.added_producer)
             self.producer = self.db.cursor.fetchone()
-            self.AddProducer = ctk.CTkLabel(self.app, text=f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}")
-            self.AddProducer.grid(row=3, column=0, padx=20, sticky="w")
+            self.SelectProducerLabelText = f"Производитель: Название - {self.producer[1]}, Страна - {self.producer[2]}, Контакты - {self.producer[3]}"
+            self.SelectProducerLabel.configure(text=self.SelectProducerLabelText)
+
+    def ChooseMedicineFunc(self):
+        medicineWindow = ChooseMedicineWindow(self.app)
+        self.app.withdraw()
+        self.app.wait_window(medicineWindow.app)
+        if medicineWindow.selected_medicine:
+            self.medicine = medicineWindow.selected_medicine
+            self.SelectMedicineLabelText = f"Препарат: МНН - {self.medicine[2]}, Торговое название - {self.medicine[3]}, Уровень контроля - {self.medicine[4]}, Форма выпуска: {self.medicine[5]}, Дозировка - {self.medicine[6]}"
+            self.SelectMedicineLabel.configure(text=self.SelectMedicineLabelText)
 
 class ChooseProducerWindow(WindowDefaultSettings):
     def __init__(self, parent):
@@ -275,7 +306,6 @@ class AddProducerWindow(WindowDefaultSettings):
         self.AddProducerButton.grid(row=3, column=0, ipadx=8, ipady=8, sticky="e")
 
     def AddProducerFunc(self):
-
         self.db.cursor.execute("""INSERT INTO Producer(name_, country, contacts)
                         VALUES (%s, %s, %s) RETURNING id_producer""", 
                         (self.ProducerNameEntry.get(), self.ProducerCountryEntry.get(), self.ProducerContactsEntry.get()))
@@ -283,6 +313,77 @@ class AddProducerWindow(WindowDefaultSettings):
         self.db.connection.commit()
         self.parent.deiconify()
         self.app.destroy()
+
+class ChooseMedicineWindow(WindowDefaultSettings):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.app.title("Медицинский центр. Выбор препарата")
+
+        self.db.cursor.execute("SELECT * FROM medicine")
+        self.AllMedicines = self.db.cursor.fetchall()
+
+        main_frame = ctk.CTkFrame(self.app)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        scroll_frame = ctk.CTkScrollableFrame(main_frame)
+        scroll_frame.pack(fill="both", expand=True)
+
+        headers_frame = ctk.CTkFrame(scroll_frame)
+        headers_frame.pack(fill="x")
+        
+        ctk.CTkLabel(headers_frame, text="МНН", width=350, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Торговое название", width=150, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Уровень контроля", width=150, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Форма выпуска", width=150, anchor="w").pack(side="left", padx=5)  
+        ctk.CTkLabel(headers_frame, text="Дозировка", width=150, anchor="w").pack(side="left", padx=5)
+
+        self.medicine_frames = []
+        for i, medicine in enumerate(self.AllMedicines):
+            frame = ctk.CTkFrame(scroll_frame)
+            frame.pack(fill="x", pady=2)
+
+            ctk.CTkLabel(frame, text=medicine[2], width=350, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[3], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[4], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[5], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[6], width=150, anchor="w").pack(side="left", padx=5)
+
+            frame.bind("<Button-1>", lambda e, idx=i: self._on_row_click(idx))
+            for child in frame.winfo_children():
+                child.bind("<Button-1>", lambda e, idx=i: self._on_row_click(idx))
+            
+            self.medicine_frames.append(frame)
+
+        select_button = ctk.CTkButton(
+            main_frame,
+            text="Выбрать",
+            command=self._on_select,
+            fg_color=DEFAULT_COLOR,
+            height=40,
+            font=("Arial", 14)
+        )
+        select_button.pack(pady=10)
+        
+        self.selected_index = None
+
+    def _on_row_click(self, index):
+        for i, frame in enumerate(self.medicine_frames):
+            frame.configure(fg_color="transparent")
+
+        self.medicine_frames[index].configure(fg_color="#1F6AA5")
+        self.selected_index = index
+
+    def _on_select(self):
+        if self.selected_index is None:
+            messagebox.showwarning("Выбор", "Пожалуйста, выберите препарат из списка")
+            return 
+        try:
+            self.selected_medicine = self.AllMedicines[self.selected_index]
+            self.parent.deiconify()
+            self.app.destroy()
+
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Ошибка при выборе: {str(e)}")
 
 class SuccessWindow:
     def __init__(self, parent):
