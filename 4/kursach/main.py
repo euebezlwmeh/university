@@ -4,8 +4,6 @@ from CTkTable import *
 import psycopg2
 
 DEFAULT_COLOR = "#2262b3"
-DEFAULT_BUTTON_WIDTH = 1
-DEFAULT_BUTTON_HEIGHT = 1
 
 class DbConnection:
     def __init__(self):
@@ -30,7 +28,7 @@ class WindowDefaultSettings:
     def __init__(self, parent):
         self.parent = parent
         self.app = ctk.CTkToplevel(parent)
-        self.app.geometry("1000x550")
+        self.app.geometry("1000x650")
         ctk.set_appearance_mode("light")
         self.db = DbConnection()
         self.app.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -144,7 +142,8 @@ class AddMedicineWindow(WindowDefaultSettings):
                                self.FormReleaseMenu.get(), self.DosageEntry.get()))
         self.db.connection.commit()
 
-        SuccessWindow(self.app)
+        messagebox.showinfo(title="Успех", message="Препарат успешно добавлен!")
+        self.parent.deiconify()
         self.app.destroy()
 
 class AddMedicineBatchWindow(WindowDefaultSettings):
@@ -152,13 +151,13 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
         super().__init__(parent)
         self.app.title("Медицинский центр. Добавить партию препарата")
 
+        self.app.grid_columnconfigure(0, weight=1)
+
         self.ChooseProducerButton = ctk.CTkButton(self.app, 
                                               text="Выбрать производителя", 
                                               fg_color=DEFAULT_COLOR,
-                                              width = DEFAULT_BUTTON_WIDTH,
-                                              height = DEFAULT_BUTTON_HEIGHT,
                                               command=self.ChooseProducerFunc)
-        self.ChooseProducerButton.grid(row=0, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
+        self.ChooseProducerButton.grid(row=0, column=0, padx=20, pady=5, sticky="w")
 
         self.OrLabel = ctk.CTkLabel(self.app, text="Или")
         self.OrLabel.grid(row=1, column=0, padx=20, pady=5, sticky="w")
@@ -166,26 +165,48 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
         self.AddProducerButton = ctk.CTkButton(self.app, 
                                            text="Добавить производителя", 
                                            fg_color=DEFAULT_COLOR,
-                                           width = DEFAULT_BUTTON_WIDTH,
-                                           height = DEFAULT_BUTTON_HEIGHT, 
                                            command=self.AddProducerFunc)
-        self.AddProducerButton.grid(row=2, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
+        self.AddProducerButton.grid(row=2, column=0, padx=20, pady=5, sticky="w")
 
         self.SelectProducerLabelText = "Выберите производителя"
         self.SelectProducerLabel = ctk.CTkLabel(self.app, text=f"Производитель: {self.SelectProducerLabelText}")
-        self.SelectProducerLabel.grid(row=3, column=0, padx=20, sticky="w")
+        self.SelectProducerLabel.grid(row=3, column=0, padx=20, pady=5, sticky="w")
 
         self.ChooseMedicineButton = ctk.CTkButton(self.app,
                                                 text="Выбрать препарат", 
                                                 fg_color=DEFAULT_COLOR,
-                                                width = DEFAULT_BUTTON_WIDTH,
-                                                height = DEFAULT_BUTTON_HEIGHT,
                                                 command=self.ChooseMedicineFunc)
-        self.ChooseMedicineButton.grid(row=4, column=0, padx=20, pady=20, ipadx=20, ipady=20, sticky="w")
+        self.ChooseMedicineButton.grid(row=4, column=0, padx=20, pady=5, sticky="w")
 
         self.SelectMedicineLabelText = "Выберите препарат"
         self.SelectMedicineLabel = ctk.CTkLabel(self.app, text=f"Препарат: {self.SelectMedicineLabelText}")
-        self.SelectMedicineLabel.grid(row=5, column=0, padx=20, sticky="w")
+        self.SelectMedicineLabel.grid(row=5, column=0, padx=20, pady=5, sticky="w")
+
+        self.SeriesLabel = ctk.CTkLabel(self.app, text="Введите серию препарата:")
+        self.SeriesLabel.grid(row=6, column=0, padx=20, pady=5, sticky="w")
+        self.SeriesEntry = ctk.CTkEntry(self.app)
+        self.SeriesEntry.grid(row=7, column=0, padx=20, pady=5, sticky="w")
+
+        self.ProductionDateLabel = ctk.CTkLabel(self.app, text="Введите дату производитва:")
+        self.ProductionDateLabel.grid(row=8, column=0, padx=20, pady=5, sticky="w")
+        self.ProductionDateEntry = ctk.CTkEntry(self.app)
+        self.ProductionDateEntry.grid(row=9, column=0, padx=20, pady=5, sticky="w")
+
+        self.ExpirationDateLabel = ctk.CTkLabel(self.app, text="Введите срок годности:")
+        self.ExpirationDateLabel.grid(row=10, column=0, padx=20, pady=5, sticky="w")
+        self.ExpirationDateEntry = ctk.CTkEntry(self.app)
+        self.ExpirationDateEntry.grid(row=11, column=0, padx=20, pady=5, sticky="w")
+
+        self.CountLabel = ctk.CTkLabel(self.app, text="Введите количество препарата в серии:")
+        self.CountLabel.grid(row=12, column=0, padx=20, pady=5, sticky="w")
+        self.CountEntry = ctk.CTkEntry(self.app)
+        self.CountEntry.grid(row=13, column=0, padx=20, pady=5, sticky="w")
+
+        self.AddMedicineBatchButton = ctk.CTkButton(self.app, 
+                                                    text="Добавить партию", 
+                                                    fg_color=DEFAULT_COLOR,
+                                                    command=self.AddMedicineBatchFunc)
+        self.AddMedicineBatchButton.grid(row=14, column=0, padx=20, pady=5, sticky="w")
 
     def ChooseProducerFunc(self):
         chooserWindow = ChooseProducerWindow(self.app)
@@ -214,6 +235,17 @@ class AddMedicineBatchWindow(WindowDefaultSettings):
             self.medicine = medicineWindow.selected_medicine
             self.SelectMedicineLabelText = f"Препарат: МНН - {self.medicine[2]}, Торговое название - {self.medicine[3]}, Уровень контроля - {self.medicine[4]}, Форма выпуска: {self.medicine[5]}, Дозировка - {self.medicine[6]}"
             self.SelectMedicineLabel.configure(text=self.SelectMedicineLabelText)
+
+    def AddMedicineBatchFunc(self):
+        self.db.cursor.execute("""INSERT INTO Medicine_batch (id_medicine, id_producer, series, production_date, expiration_date, count)
+                                VALUES (%s, %s, %s, %s, %s, %s)""", 
+                                (self.medicine[0], self.producer[0],
+                                 self.SeriesEntry.get(), self.ProductionDateEntry.get(),
+                                 self.ExpirationDateEntry.get(), self.CountEntry.get()))
+        self.db.connection.commit()
+        messagebox.showinfo(title="Успех", message="Партия успешно добавлена!")
+        self.parent.deiconify()
+        self.app.destroy()
 
 class ChooseProducerWindow(WindowDefaultSettings):
     def __init__(self, parent):
@@ -384,21 +416,6 @@ class ChooseMedicineWindow(WindowDefaultSettings):
 
         except Exception as e:
             messagebox.showerror("Ошибка", f"Ошибка при выборе: {str(e)}")
-
-class SuccessWindow:
-    def __init__(self, parent):
-        self.parent = parent
-        self.app = ctk.CTkToplevel(parent)
-        self.app.title("Успешно!")
-        self.app.geometry("300x150")
-
-        self.SuccessLabel = ctk.CTkLabel(self.app, text="Успешно!", bg_color="#61c671")
-        self.SuccessLabel.pack(pady=40)
-
-        self.app.protocol("WM_DELETE_WINDOW", self.on_close)
-
-    def on_close(self):
-        self.app.destroy()
 
 if __name__ == "__main__":
     app = ctk.CTk()
