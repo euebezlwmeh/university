@@ -9,10 +9,10 @@ class DbConnection:
     def __init__(self):
         try:
             self.connection = psycopg2.connect(
-                dbname='postgres', 
+                dbname='kursach', 
                 user='postgres', 
                 host='localhost', 
-                password='MH0375KCHA8',
+                password='postgres',
                 port='5432',
                 client_encoding='win1251'
             )
