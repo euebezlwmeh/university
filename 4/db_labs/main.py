@@ -384,6 +384,14 @@ class AdminWindow(WindowDefaultSize):
                                              command=self.last_15_client_func)
         self.last_15_client_btn.grid(row=3, column=0, sticky="nw")
 
+        self.delete_coast_per_unit_btn = tk.Button(self.root,
+                                                   text="Удалить услугу",
+                                                   width=20, 
+                                                   height=1, 
+                                                   font=("Arial", 12), 
+                                                   command=self.delete_coast_per_unit_func)
+        self.delete_coast_per_unit_btn.grid(row=3, column=0, sticky="nw")
+
     def all_client_func(self):
         AllClientWindow(self.root)
 
@@ -392,6 +400,9 @@ class AdminWindow(WindowDefaultSize):
 
     def last_15_client_func(self):
         Last15ClientWindow(self.root)
+
+    def delete_coast_per_unit_func(self):
+        DeleteCoastPerUnitWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -474,7 +485,7 @@ class Last15ClientWindow(WindowDefaultSize):
 
         self.db.cursor.execute("SELECT * FROM client ORDER BY client_id DESC LIMIT 15")
         all_clients = self.db.cursor.fetchall()
-        
+
         all_clients_table = ttk.Treeview(self.root, 
                                               columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
                                               show="headings")
@@ -491,6 +502,36 @@ class Last15ClientWindow(WindowDefaultSize):
         all_clients_table.grid(row=1, column=0, sticky="nw")
 
         self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class DeleteCoastPerUnitWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Удалить услугу")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.enter_coast_per_unit_label = tk.Label(self.root, text="Введите id услуги")
+        self.enter_coast_per_unit_label.grid(row=1, column=0, sticky="nw")
+        self.enter_coast_per_unit_entry = tk.Entry(self.root)
+        self.enter_coast_per_unit_entry.grid(row=1, column=1, sticky="nw")
+        self.confirm_deleting_btn = tk.Button(self.root,
+                                          text="Удалить услугу",
+                                          font=("Arial", 12), 
+                                          command=self.confirm_deleting_func)
+        self.confirm_deleting_btn.grid(row=2, column=1, sticky="nw")
+
+    def confirm_deleting_func(self):
+        self.db.cursor.execute("DELETE FROM coast_per_unit WHERE coast_per_unit_id=%s", (self.enter_coast_per_unit_entry.get(),))
+        self.db.connection.commit()
+
+        self.success_label = tk.Label(self.root, text="Успешно", bg="green")
+        self.success_label.grid(row=3, column=1, sticky="nw")
 
     def back(self):
         self.root.destroy()
