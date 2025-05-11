@@ -406,7 +406,15 @@ class AdminWindow(WindowDefaultSize):
                                             height=1,
                                             font=("Arial", 12),
                                             command=self.contract_coast_func)
-        self.contract_coast_btn.grid(row=6, column=0, sticky="nw")                                      
+        self.contract_coast_btn.grid(row=6, column=0, sticky="nw")
+
+        self.search_by_surname_btn = tk.Button(self.root,
+                                                text="Поиск по фамилии",
+                                                width=25,
+                                                height=1,
+                                                font=("Arial", 12),
+                                                command=self.search_by_surname_func)      
+        self.search_by_surname_btn.grid(row=7, column=0, sticky="nw")                    
 
     def all_client_func(self):
         AllClientWindow(self.root)
@@ -425,6 +433,9 @@ class AdminWindow(WindowDefaultSize):
 
     def contract_coast_func(self):
         ContractCoastWindow(self.root)
+
+    def search_by_surname_func(self):
+        SearchBySurnameWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -712,6 +723,46 @@ class ContractCoastWindow(WindowDefaultSize):
             all_contract_table.insert("", "end", values=contract)
 
         all_contract_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class SearchBySurnameWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Поиск по фамилии")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.search_entry = tk.Entry(self.root)
+        self.search_entry.grid(row=1, column=0, sticky="nw")
+        self.search_btn = tk.Button(self.root, text="Поиск", command=self.search_func)
+        self.search_btn.grid(row=2, column=0, sticky="nw")
+
+        
+    def search_func(self):
+        self.db.cursor.execute(f"SELECT * FROM client WHERE surname LIKE '{self.search_entry.get()}%';")
+        all_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                                        columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                        show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=3, column=0, sticky="nw")
 
         self.db.connection.commit()
 
