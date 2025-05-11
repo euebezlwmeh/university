@@ -390,7 +390,7 @@ class AdminWindow(WindowDefaultSize):
                                                    height=1, 
                                                    font=("Arial", 12), 
                                                    command=self.delete_coast_per_unit_func)
-        self.delete_coast_per_unit_btn.grid(row=3, column=0, sticky="nw")
+        self.delete_coast_per_unit_btn.grid(row=4, column=0, sticky="nw")
 
         self.unique_space_id_btn = tk.Button(self.root,
                                              text="Помещения одного клиента",
@@ -398,7 +398,7 @@ class AdminWindow(WindowDefaultSize):
                                              height=1, 
                                              font=("Arial", 12), 
                                              command=self.unique_space_id_func) 
-        self.unique_space_id_btn.grid(row=4, column=0, sticky="nw")
+        self.unique_space_id_btn.grid(row=5, column=0, sticky="nw")
 
         self.contract_coast_btn = tk.Button(self.root,
                                             text="Оценка стоимости договоров",
@@ -406,7 +406,7 @@ class AdminWindow(WindowDefaultSize):
                                             height=1,
                                             font=("Arial", 12),
                                             command=self.contract_coast_func)
-        self.contract_coast_btn.grid(row=5, column=0, sticky="nw")                                      
+        self.contract_coast_btn.grid(row=6, column=0, sticky="nw")                                      
 
     def all_client_func(self):
         AllClientWindow(self.root)
@@ -629,6 +629,89 @@ class ContractCoastWindow(WindowDefaultSize):
             coasts_table.insert("", "end", values=coast)
 
         coasts_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+        self.more_coast_btn = tk.Button(self.root, text="Стоимость договора больше:", command=self.more_coast_func)
+        self.more_coast_btn.grid(row=2, column=0, sticky="nw")
+        self.more_coast_entry = tk.Entry(self.root)
+        self.more_coast_entry.grid(row=3, column=0, sticky="nw")
+        self.less_coast_btn = tk.Button(self.root, text="Стоимость договора меньше:", command=self.less_coast_func)
+        self.less_coast_btn.grid(row=4, column=0, sticky="nw")
+        self.less_coast_entry = tk.Entry(self.root)
+        self.less_coast_entry.grid(row=5, column=0, sticky="nw")
+        self.between_coast_btn = tk.Button(self.root, text="Стоимость договора между:", command=self.between_coast_func)
+        self.between_coast_btn.grid(row=6, column=0, sticky="nw")
+        self.between_min_coast_entry = tk.Entry(self.root)
+        self.between_min_coast_entry.grid(row=7, column=0, sticky="nw")
+        self.and_label = tk.Label(self.root, text="И")
+        self.and_label.grid(row=8, column=0, sticky="nw")
+        self.between_max_coast_entry = tk.Entry(self.root)
+        self.between_max_coast_entry.grid(row=9, column=0, sticky="nw")
+
+    def more_coast_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE total_coast > %s", (self.more_coast_entry.get(),))
+        all_contract = self.db.cursor.fetchall()
+
+        all_contract_table = ttk.Treeview(self.root, 
+                                        columns=("contract_id", "client_id", "space_id", "conclusion_date", "total_coast", "completion_date", "contract_status_id"),
+                                        show="headings")
+        all_contract_table.heading("contract_id", text="contract_id")
+        all_contract_table.heading("client_id", text="client_id")
+        all_contract_table.heading("space_id", text="space_id")
+        all_contract_table.heading("conclusion_date", text="Дата заключения")
+        all_contract_table.heading("total_coast", text="Стоимость")
+        all_contract_table.heading("completion_date", text="Дата завершения")
+        all_contract_table.heading("contract_status_id", text="id договора")
+
+        for contract in all_contract:
+            all_contract_table.insert("", "end", values=contract)
+
+        all_contract_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def less_coast_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE total_coast < %s", (self.less_coast_entry.get(),))
+        all_contract = self.db.cursor.fetchall()
+
+        all_contract_table = ttk.Treeview(self.root, 
+                                        columns=("contract_id", "client_id", "space_id", "conclusion_date", "total_coast", "completion_date", "contract_status_id"),
+                                        show="headings")
+        all_contract_table.heading("contract_id", text="contract_id")
+        all_contract_table.heading("client_id", text="client_id")
+        all_contract_table.heading("space_id", text="space_id")
+        all_contract_table.heading("conclusion_date", text="Дата заключения")
+        all_contract_table.heading("total_coast", text="Стоимость")
+        all_contract_table.heading("completion_date", text="Дата завершения")
+        all_contract_table.heading("contract_status_id", text="id договора")
+
+        for contract in all_contract:
+            all_contract_table.insert("", "end", values=contract)
+
+        all_contract_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def between_coast_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE total_coast BETWEEN %s AND %s", (self.between_min_coast_entry.get(), self.between_max_coast_entry.get()))
+        all_contract = self.db.cursor.fetchall()
+
+        all_contract_table = ttk.Treeview(self.root, 
+                                        columns=("contract_id", "client_id", "space_id", "conclusion_date", "total_coast", "completion_date", "contract_status_id"),
+                                        show="headings")
+        all_contract_table.heading("contract_id", text="contract_id")
+        all_contract_table.heading("client_id", text="client_id")
+        all_contract_table.heading("space_id", text="space_id")
+        all_contract_table.heading("conclusion_date", text="Дата заключения")
+        all_contract_table.heading("total_coast", text="Стоимость")
+        all_contract_table.heading("completion_date", text="Дата завершения")
+        all_contract_table.heading("contract_status_id", text="id договора")
+
+        for contract in all_contract:
+            all_contract_table.insert("", "end", values=contract)
+
+        all_contract_table.grid(row=1, column=0, sticky="nw")
 
         self.db.connection.commit()
 
