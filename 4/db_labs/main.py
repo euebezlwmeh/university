@@ -794,21 +794,36 @@ class ByClientCoastWindow(WindowDefaultSize):
         self.client_id_label.grid(row=1, column=0)
         self.client_id_entry = tk.Entry(self.root)
         self.client_id_entry.grid(row=2, column=0)
-        self.coast_label = tk.Label(self.root, text="Введите стоимость договора")
-        self.coast_label.grid(row=3, column=0)
-        self.coast_label_entry = tk.Entry(self.root)
-        self.coast_label_entry.grid(row=4, column=0)
+        self.coast_min_label = tk.Label(self.root, text="Введите стоимость договора, стоимость которого должна быть меньше")
+        self.coast_min_label.grid(row=3, column=0)
+        self.coast_min_label_entry = tk.Entry(self.root)
+        self.coast_min_label_entry.grid(row=4, column=0)
+        self.coast_max_label = tk.Label(self.root, text="Введите стоимость договора, стоимость которого должна быть больше")
+        self.coast_max_label.grid(row=5, column=0)
+        self.coast_max_label_entry = tk.Entry(self.root)
+        self.coast_max_label_entry.grid(row=6, column=0)
         self.by_client_btn = tk.Button(self.root, text="Подтвердить", command=self.and_func)
-        self.by_client_btn.grid(row=5, column=0)
+        self.by_client_btn.grid(row=7, column=0)
 
     def and_func(self):
-        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND total_coast>%s", 
-                               (self.client_id_entry.get(), self.coast_label_entry.get(),))
+        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND (total_coast < %s OR total_coast > %s)", 
+                               (self.client_id_entry.get(), self.coast_min_label_entry.get(), self.coast_max_label_entry.get(),))
         contracts = self.db.cursor.fetchall()
+        self.table_func(contracts)
 
+    def or_func(self):
+        pass
+
+    def not_func(self):
+        pass
+
+    def exists_func(self):
+        pass
+
+    def table_func(self, contracts):
         all_contracts_table = ttk.Treeview(self.root, 
-                                        columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
-                                        show="headings")
+                                columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                show="headings")
         all_contracts_table.heading("client_id", text="client_id")
         all_contracts_table.heading("Фамилия", text="Фамилия")
         all_contracts_table.heading("Имя", text="Имя")
@@ -819,7 +834,7 @@ class ByClientCoastWindow(WindowDefaultSize):
         for contract in contracts:
             all_contracts_table.insert("", "end", values=contract)
 
-        all_contracts_table.grid(row=0, column=1, sticky="nw")
+        all_contracts_table.grid(row=8, column=0, sticky="nw")
 
         self.db.connection.commit()
 
