@@ -416,7 +416,11 @@ class MainWindow(WindowDefaultSize):
                                         command=self.select_unpaid_orders_func)
         self.unpaid_orders_btn.place(x=720, y=100)
 
-
+        self.update_personal_data_btn = tk.Button(self.root,
+                                                  font=("Arial", 14),
+                                                  text="Обновить персональные данные",
+                                                  command=self.update_personal_data)
+        self.update_personal_data_btn.place(x=1000, y=50)
 
     def add_order_func(self):
         self.add_servise_btn = tk.Button(self.root,
@@ -809,6 +813,67 @@ class MainWindow(WindowDefaultSize):
 
     def select_unpaid_orders_func(self):
         UnpaidOrdersWindow(self.root, self.client_id)
+
+    def update_personal_data(self):
+        self.update_surname_label = tk.Label(self.root, text="Введите новую фамилию:", font=("Arial", 12), anchor="e", width=30)
+        self.update_surname_label.place(x=900, y=90)
+        self.update_surname_entry = tk.Entry(self.root)
+        self.update_surname_entry.place(x=1200, y=90)
+
+        self.update_name_label = tk.Label(self.root, text="Введите новое имя:", font=("Arial", 12), anchor="e", width=30)
+        self.update_name_label.place(x=900, y=130)
+        self.update_name_entry = tk.Entry(self.root)
+        self.update_name_entry.place(x=1200, y=130)
+
+        self.update_patronymic_label = tk.Label(self.root, text="Введите новое отчество:", font=("Arial", 12), anchor="e", width=30)
+        self.update_patronymic_label.place(x=900, y=170)
+        self.update_patronymic_entry = tk.Entry(self.root)
+        self.update_patronymic_entry.place(x=1200, y=170)
+
+        self.update_phone_label = tk.Label(self.root, text="Введите новый номер телефона:", font=("Arial", 12), anchor="e", width=30)
+        self.update_phone_label.place(x=900, y=210)
+        self.update_phone_entry = tk.Entry(self.root)
+        self.update_phone_entry.place(x=1200, y=210)
+
+        self.update_password_label = tk.Label(self.root, text="Введите новый пароль:", font=("Arial", 12), anchor="e", width=30)
+        self.update_password_label.place(x=900, y=250)
+        self.update_password_entry = tk.Entry(self.root)
+        self.update_password_entry.place(x=1200, y=250)
+
+        self.confirm_update_personal_data_btn = tk.Button(self.root, 
+                                                          text="Подтвердить", 
+                                                          font=("Arial", 14), 
+                                                          command=self.confirm_update_personal_data)
+        self.confirm_update_personal_data_btn.place(x=1100, y=290)
+
+    def confirm_update_personal_data(self):
+        self.db.cursor.execute("""UPDATE client SET 
+                               surname=%s,
+                               name_=%s,
+                               patronymic=%s,
+                               phone=%s,
+                               password_=%s
+                               WHERE client_id=%s""",
+                               (self.update_surname_entry.get(),
+                                self.update_name_entry.get(),
+                                self.update_patronymic_entry.get(),
+                                self.update_phone_entry.get(),
+                                self.update_password_entry.get(),
+                                self.client_id))
+        self.db.connection.commit()
+
+        widgets = ["update_surname_label", "update_surname_entry", "update_name_label", "update_name_entry",
+                   "update_patronymic_label", "update_patronymic_entry", "update_phone_label", "update_phone_entry", 
+                   "update_password_label", "update_password_entry", "confirm_update_personal_data_btn"
+        ]
+
+        for widget_name in widgets:
+            if hasattr(self, widget_name):
+                widget = getattr(self, widget_name)
+                if widget.winfo_exists():
+                    widget.destroy()
+
+        self.root.update()
 
     def back(self):
         self.root.destroy()
