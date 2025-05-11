@@ -376,11 +376,22 @@ class AdminWindow(WindowDefaultSize):
                                              command=self.first_10_client_func)
         self.first_10_client_btn.grid(row=2, column=0, sticky="nw")
 
+        self.last_15_client_btn = tk.Button(self.root,
+                                             text="Последние 15 клиентов",
+                                             width=20, 
+                                             height=1, 
+                                             font=("Arial", 12), 
+                                             command=self.last_15_client_func)
+        self.last_15_client_btn.grid(row=3, column=0, sticky="nw")
+
     def all_client_func(self):
         AllClientWindow(self.root)
 
     def first_10_client_func(self):
         First10ClientWindow(self.root)
+
+    def last_15_client_func(self):
+        Last15ClientWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -448,6 +459,39 @@ class First10ClientWindow(WindowDefaultSize):
 
         self.db.connection.commit()
     
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class Last15ClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Последние 15 клиентов")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM client ORDER BY client_id DESC LIMIT 15")
+        all_clients = self.db.cursor.fetchall()
+        
+        all_clients_table = ttk.Treeview(self.root, 
+                                              columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                              show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
     def back(self):
         self.root.destroy()
         self.root.master.deiconify()
