@@ -354,10 +354,50 @@ class AdminWindow(WindowDefaultSize):
         self.root = tk.Toplevel(parent)
         self.root.title("Администратор")
         super().__init__(self.root)
+        self.db = DbConnection()
 
         BackBtn(self.root, self.back)
         self.parent = parent
         self.client_id = client_id
+
+        self.all_client_btn = tk.Button(self.root, text="Все клиенты", width=10, height=1, font=("Arial", 12), command=self.all_client_func)
+        self.all_client_btn.grid(row=1, column=0)
+
+    def all_client_func(self):
+        AllClientWindow(self.root)
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class AllClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Список клиентов")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM client")
+        all_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                                              columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                              show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=1, column=0)
+
+        self.db.connection.commit()
 
     def back(self):
         self.root.destroy()
@@ -882,9 +922,6 @@ class MainWindow(WindowDefaultSize):
     def on_close(self): # не робит
         self.root.destroy()
         self.parent.destroy()
-
-class DeleteServise(WindowDefaultSize):
-    pass
 
 class AllContractsWindow:
     def __init__(self, parent, client_id, coast_per_unit_id):
