@@ -398,7 +398,15 @@ class AdminWindow(WindowDefaultSize):
                                              height=1, 
                                              font=("Arial", 12), 
                                              command=self.unique_space_id_func) 
-        self.unique_space_id_btn.grid(row=4, column=0, sticky="nw")                                            
+        self.unique_space_id_btn.grid(row=4, column=0, sticky="nw")
+
+        self.contract_coast_btn = tk.Button(self.root,
+                                            text="Оценка стоимости договоров",
+                                            width=25,
+                                            height=1,
+                                            font=("Arial", 12),
+                                            command=self.contract_coast_func)
+        self.contract_coast_btn.grid(row=5, column=0, sticky="nw")                                      
 
     def all_client_func(self):
         AllClientWindow(self.root)
@@ -414,6 +422,9 @@ class AdminWindow(WindowDefaultSize):
 
     def unique_space_id_func(self):
         UniqueSpaceIdWindow(self.root)
+
+    def contract_coast_func(self):
+        ContractCoastWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -587,6 +598,37 @@ class UniqueSpaceIdWindow(WindowDefaultSize):
             all_client_space_table.insert("", "end", values=space)
 
         all_client_space_table.grid(row=4, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ContractCoastWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Оценка стоимости договоров")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT MAX(total_coast), MIN(total_coast), AVG(total_coast) FROM contract")
+        coasts = self.db.cursor.fetchall()
+
+        coasts_table = ttk.Treeview(self.root, 
+                                    columns=("MAX", "MIN", "AVG"), 
+                                    show="headings")
+        
+        coasts_table.heading("MAX", text="Максимальное значение стоимости договора")
+        coasts_table.heading("MIN", text="Минимальное значение стоимости договора")
+        coasts_table.heading("AVG", text="Среднее значение стоимости договора")
+
+        for coast in coasts:
+            coasts_table.insert("", "end", values=coast)
+
+        coasts_table.grid(row=1, column=0, sticky="nw")
 
         self.db.connection.commit()
 
