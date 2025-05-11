@@ -392,6 +392,14 @@ class AdminWindow(WindowDefaultSize):
                                                    command=self.delete_coast_per_unit_func)
         self.delete_coast_per_unit_btn.grid(row=3, column=0, sticky="nw")
 
+        self.unique_space_id_btn = tk.Button(self.root,
+                                             text="Помещения одного клиента",
+                                             width=25, 
+                                             height=1, 
+                                             font=("Arial", 12), 
+                                             command=self.unique_space_id_func) 
+        self.unique_space_id_btn.grid(row=4, column=0, sticky="nw")                                            
+
     def all_client_func(self):
         AllClientWindow(self.root)
 
@@ -403,6 +411,9 @@ class AdminWindow(WindowDefaultSize):
 
     def delete_coast_per_unit_func(self):
         DeleteCoastPerUnitWindow(self.root)
+
+    def unique_space_id_func(self):
+        UniqueSpaceIdWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -524,7 +535,7 @@ class DeleteCoastPerUnitWindow(WindowDefaultSize):
                                           text="Удалить услугу",
                                           font=("Arial", 12), 
                                           command=self.confirm_deleting_func)
-        self.confirm_deleting_btn.grid(row=2, column=1, sticky="nw")
+        self.confirm_deleting_btn.grid(row=2, column=0, sticky="nw")
 
     def confirm_deleting_func(self):
         self.db.cursor.execute("DELETE FROM coast_per_unit WHERE coast_per_unit_id=%s", (self.enter_coast_per_unit_entry.get(),))
@@ -532,6 +543,52 @@ class DeleteCoastPerUnitWindow(WindowDefaultSize):
 
         self.success_label = tk.Label(self.root, text="Успешно", bg="green")
         self.success_label.grid(row=3, column=1, sticky="nw")
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class UniqueSpaceIdWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Помещения клиента")
+        super().__init__(self.root)
+        self.db = DbConnection()
+        BackBtn(self.root, self.back)
+
+        self.enter_client_label = tk.Label(self.root, text="Введите id клиента")
+        self.enter_client_label.grid(row=1, column=0, sticky="nw")
+        self.enter_client_entry = tk.Entry(self.root)
+        self.enter_client_entry.grid(row=2, column=0, sticky="nw")
+        self.confirm_btn = tk.Button(self.root,
+                                    text="Показать помещения",
+                                    font=("Arial", 12), 
+                                    command=self.client_servise)
+        self.confirm_btn.grid(row=3, column=0, sticky="nw")
+
+    def client_servise(self):
+        self.db.cursor.execute("""SELECT DISTINCT s.space_id, s.street, s.home, s.floor_, s.apartment, s.rooms_num
+                                    FROM contract c
+                                    JOIN space s ON c.space_id = s.space_id
+                                    WHERE c.client_id = %s""", (self.enter_client_entry.get(),))
+        all_client_spaces = self.db.cursor.fetchall()
+
+        all_client_space_table = ttk.Treeview(self.root, 
+                                        columns=("space_id", "street", "home", "floor_", "apartment", "rooms_num"),
+                                        show="headings")
+        all_client_space_table.heading("space_id", text="space_id")
+        all_client_space_table.heading("street", text="Улица")
+        all_client_space_table.heading("home", text="Дом")
+        all_client_space_table.heading("floor_", text="Этаж")
+        all_client_space_table.heading("apartment", text="Квартира")
+        all_client_space_table.heading("rooms_num", text="Количество комнат")
+
+        for space in all_client_spaces:
+            all_client_space_table.insert("", "end", values=space)
+
+        all_client_space_table.grid(row=4, column=0, sticky="nw")
+
+        self.db.connection.commit()
 
     def back(self):
         self.root.destroy()
