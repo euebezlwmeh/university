@@ -440,6 +440,14 @@ class AdminWindow(WindowDefaultSize):
                                                           command=self.contracts_with_more_one_work_func)
         self.contracts_with_more_one_work_btn.grid(row=10, column=0, sticky="nw")
 
+        self.count_contracts_for_every_client_btn = tk.Button(self.root,
+                                                          text="Количество договоров для каждого пользователя",
+                                                          width=50,
+                                                          height=1,
+                                                          font=("Arial", 12),
+                                                          command=self.count_contracts_for_every_client_func)
+        self.count_contracts_for_every_client_btn.grid(row=11, column=0, sticky="nw")
+
     def all_client_func(self):
         AllClientWindow(self.root)
 
@@ -469,6 +477,9 @@ class AdminWindow(WindowDefaultSize):
 
     def contracts_with_more_one_work_func(self):
         ContractsWithMoreOneWorkWindow(self.root)
+
+    def count_contracts_for_every_client_func(self):
+        CountContractForEveryClientWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -830,8 +841,16 @@ class ByClientCoastWindow(WindowDefaultSize):
         self.by_client_btn.grid(row=8, column=0)
 
     def and_func(self):
-        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND (total_coast < %s OR total_coast > %s) AND NOT total_coast=%s AND NOT total_coast=%s", 
-                               (self.client_id_entry.get(), self.coast_min_label_entry.get(), self.coast_max_label_entry.get(), self.coast_min_label_entry.get(), self.coast_max_label_entry.get(),))
+        self.db.cursor.execute("""SELECT * FROM contract WHERE client_id=%s AND (total_coast < %s OR total_coast > %s) 
+                               AND NOT total_coast=%s AND NOT total_coast=%s 
+                               AND total_coast IS NOT NULL AND total_coast IS NOT NULL""", 
+                               (self.client_id_entry.get(), 
+                                self.coast_min_label_entry.get(), 
+                                self.coast_max_label_entry.get(), 
+                                self.coast_min_label_entry.get(), 
+                                self.coast_max_label_entry.get(), 
+                                self.coast_min_label_entry.get(), 
+                                self.coast_max_label_entry.get(),))
         contracts = self.db.cursor.fetchall()
         self.table_func(contracts)
         self.db.connection.commit()
@@ -923,6 +942,36 @@ class ContractsWithMoreOneWorkWindow(WindowDefaultSize):
     def back(self):
         self.root.destroy()
         self.root.master.deiconify()
+
+class CountContractForEveryClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Количество договоров для каждого пользователя")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db = DbConnection()
+
+        self.db.cursor.execute("SELECT client_id, COUNT(*) FROM contract GROUP BY client_id ORDER BY client_id")
+        contracts = self.db.cursor.fetchall()
+
+        all_contracts_table = ttk.Treeview(self.root, 
+                        columns=("client_id", "count"),
+                        show="headings")
+        all_contracts_table.heading("client_id", text="client_id")
+        all_contracts_table.heading("count", text="Количество договоров")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=1, column=0, sticky="nw")        
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
 
 class MainWindow(WindowDefaultSize):
     def __init__(self, parent, client_id):
