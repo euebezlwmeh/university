@@ -418,11 +418,27 @@ class AdminWindow(WindowDefaultSize):
 
         self.by_client_coast_btn = tk.Button(self.root, 
                                             text="Сортировка по стоимости заказа клиента",
-                                            width=25,
+                                            width=40,
                                             height=1,
                                             font=("Arial", 12),
                                             command=self.by_client_coast_func)
         self.by_client_coast_btn.grid(row=8, column=0, sticky="nw")
+
+        self.contract_by_conclusion_date_btn = tk.Button(self.root,
+                                                         text="Договор по дате и стоимости",
+                                                         width=25,
+                                                         height=1,
+                                                         font=("Arial", 12),
+                                                         command=self.contract_by_conclusion_date_func)
+        self.contract_by_conclusion_date_btn.grid(row=9, column=0, sticky="nw")
+
+        self.contracts_with_more_one_work_btn = tk.Button(self.root, 
+                                                          text="Договоры, в которых более одной работы",
+                                                          width=40,
+                                                          height=1,
+                                                          font=("Arial", 12),
+                                                          command=self.contracts_with_more_one_work_func)
+        self.contracts_with_more_one_work_btn.grid(row=10, column=0, sticky="nw")
 
     def all_client_func(self):
         AllClientWindow(self.root)
@@ -447,6 +463,12 @@ class AdminWindow(WindowDefaultSize):
 
     def by_client_coast_func(self):
         ByClientCoastWindow(self.root)
+
+    def contract_by_conclusion_date_func(self):
+        ContractByConclusionDateWindow(self.root)
+
+    def contracts_with_more_one_work_func(self):
+        ContractsWithMoreOneWorkWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -794,50 +816,110 @@ class ByClientCoastWindow(WindowDefaultSize):
         self.client_id_label.grid(row=1, column=0)
         self.client_id_entry = tk.Entry(self.root)
         self.client_id_entry.grid(row=2, column=0)
-        self.coast_min_label = tk.Label(self.root, text="Введите стоимость договора, стоимость которого должна быть меньше")
+        self.coast_min_label = tk.Label(self.root, text="Введите нижнюю границу")
         self.coast_min_label.grid(row=3, column=0)
         self.coast_min_label_entry = tk.Entry(self.root)
         self.coast_min_label_entry.grid(row=4, column=0)
-        self.coast_max_label = tk.Label(self.root, text="Введите стоимость договора, стоимость которого должна быть больше")
+        self.coast_max_label = tk.Label(self.root, text="Введите верхнюю границу")
         self.coast_max_label.grid(row=5, column=0)
         self.coast_max_label_entry = tk.Entry(self.root)
         self.coast_max_label_entry.grid(row=6, column=0)
-        self.by_client_btn = tk.Button(self.root, text="Подтвердить", command=self.and_func)
+        self.by_client_btn = tk.Button(self.root, text="До и после диапазона", command=self.and_func)
         self.by_client_btn.grid(row=7, column=0)
+        self.by_client_btn = tk.Button(self.root, text="В диапазоне", command=self.between_func)
+        self.by_client_btn.grid(row=8, column=0)
 
     def and_func(self):
-        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND (total_coast < %s OR total_coast > %s)", 
-                               (self.client_id_entry.get(), self.coast_min_label_entry.get(), self.coast_max_label_entry.get(),))
+        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND (total_coast < %s OR total_coast > %s) AND NOT total_coast=%s AND NOT total_coast=%s", 
+                               (self.client_id_entry.get(), self.coast_min_label_entry.get(), self.coast_max_label_entry.get(), self.coast_min_label_entry.get(), self.coast_max_label_entry.get(),))
         contracts = self.db.cursor.fetchall()
         self.table_func(contracts)
+        self.db.connection.commit()
 
-    def or_func(self):
-        pass
-
-    def not_func(self):
-        pass
-
-    def exists_func(self):
-        pass
+    def between_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND AND total_coast BETWEEN %s AND %s", 
+                               (self.client_id_entry.get(), self.coast_min_label_entry.get(), self.coast_min_label_entry.get(),))
+        contracts = self.db.cursor.fetchall()
+        self.table_func(contracts)
+        self.db.connection.commit()
 
     def table_func(self, contracts):
         all_contracts_table = ttk.Treeview(self.root, 
-                                columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                columns=("contract_id", "space_id", "conclusion_date", "total_coast", "completion_date"),
                                 show="headings")
-        all_contracts_table.heading("client_id", text="client_id")
-        all_contracts_table.heading("Фамилия", text="Фамилия")
-        all_contracts_table.heading("Имя", text="Имя")
-        all_contracts_table.heading("Отчество", text="Отчество")
-        all_contracts_table.heading("Телефон", text="Телефон")
-        all_contracts_table.heading("Пароль", text="Пароль")
+        all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("space_id", text="space_id")
+        all_contracts_table.heading("conclusion_date", text="Дата заключения")
+        all_contracts_table.heading("total_coast", text="Итоговая стоимость")
+        all_contracts_table.heading("completion_date", text="Дата завершения")
 
         for contract in contracts:
             all_contracts_table.insert("", "end", values=contract)
 
-        all_contracts_table.grid(row=8, column=0, sticky="nw")
+        all_contracts_table.grid(row=9, column=0, sticky="nw")
 
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ContractByConclusionDateWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Договоры по дате заключения и стоимости")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM contract ORDER BY conclusion_date DESC, total_coast ASC")
+        contracts = self.db.cursor.fetchall()
+
+        self.table_func(contracts)
         self.db.connection.commit()
 
+    def table_func(self, contracts):
+        all_contracts_table = ttk.Treeview(self.root, 
+                                columns=("contract_id", "space_id", "conclusion_date", "total_coast", "completion_date"),
+                                show="headings")
+        all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("space_id", text="space_id")
+        all_contracts_table.heading("conclusion_date", text="Дата заключения")
+        all_contracts_table.heading("total_coast", text="Итоговая стоимость")
+        all_contracts_table.heading("completion_date", text="Дата завершения")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=1, column=0, sticky="nw")
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ContractsWithMoreOneWorkWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Договоры, в которых более одной работы")
+        super().__init__(self.root)
+
+        BackBtn(self.root, self.back)
+
+        self.db = DbConnection()
+
+        self.db.cursor.execute("SELECT contract_id, total_coast FROM contract EXCEPT SELECT contract_id, coast_for_work FROM works_under_contract ORDER BY contract_id ASC")
+        contracts = self.db.cursor.fetchall()
+
+        all_contracts_table = ttk.Treeview(self.root, 
+                        columns=("contract_id", "total_coast"),
+                        show="headings")
+        all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("total_coast", text="Итоговая стоимость")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=1, column=0, sticky="nw")
+ 
     def back(self):
         self.root.destroy()
         self.root.master.deiconify()
