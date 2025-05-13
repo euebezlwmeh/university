@@ -2,7 +2,6 @@ import customtkinter as ctk
 from tkinter import messagebox
 from CTkTable import *
 import psycopg2
-import pandas as pd
 
 DEFAULT_COLOR = "#2262b3"
 
