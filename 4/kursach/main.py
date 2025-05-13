@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import messagebox
 from CTkTable import *
 import psycopg2
+import pandas as pd
 
 DEFAULT_COLOR = "#2262b3"
 
@@ -45,24 +46,34 @@ class MainWindow:
         ctk.set_appearance_mode("light")
 
         self.app.grid_columnconfigure(0, weight=1)
+
+        self.medicineSearchBtn = ctk.CTkButton(self.app,
+                                            text="Поиск препарата по МНН",
+                                            fg_color=DEFAULT_COLOR,
+                                            command=self.medicineSearchFunc)
+        self.medicineSearchBtn.grid(row=0, column=0, padx=20, pady=5, sticky="w")
         
         self.addMedicineBtn = ctk.CTkButton(self.app, 
                                        text="Добавить препарат",
                                        fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineFunc)
-        self.addMedicineBtn.grid(row=0, column=0, padx=20, pady=5, sticky="w")
+        self.addMedicineBtn.grid(row=1, column=0, padx=20, pady=5, sticky="w")
 
         self.addMedicineBatchBtn = ctk.CTkButton(self.app, 
                                        text="Добавить партию препарата",
                                        fg_color=DEFAULT_COLOR,  
                                        command=self.addMedicineBatchFunc)
-        self.addMedicineBatchBtn.grid(row=1, column=0, padx=20, pady=5, sticky="w")
+        self.addMedicineBatchBtn.grid(row=2, column=0, padx=20, pady=5, sticky="w")
 
         self.BatchWritingOffBtn = ctk.CTkButton(self.app,
                                                 text="Списать препараты из партии",
                                                 fg_color=DEFAULT_COLOR,
                                                 command=self.BatchWritingOffFunc)
-        self.BatchWritingOffBtn.grid(row=2, column=0, padx=20, pady=5, sticky="w")
+        self.BatchWritingOffBtn.grid(row=3, column=0, padx=20, pady=5, sticky="w")
+
+    def medicineSearchFunc(self):
+        self.app.withdraw()
+        medicineSearchWindow(self.app)
 
     def addMedicineFunc(self):
         self.app.withdraw()
@@ -76,10 +87,66 @@ class MainWindow:
         self.app.withdraw()
         BatchWritingOffWindow(self.app)
 
+class medicineSearchWindow(WindowDefaultSettings):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.app.title("Поиск препарата по МНН")
+
+        main_container = ctk.CTkFrame(self.app)
+        main_container.pack(fill="both", expand=True, padx=20, pady=20)
+
+        self.SearchEntry = ctk.CTkEntry(main_container)
+        self.SearchEntry.pack(pady=8)
+        
+        self.SearchBtn = ctk.CTkButton(
+            main_container,
+            text="Поиск", 
+            fg_color=DEFAULT_COLOR, 
+            command=self.SearchFunc
+        )
+        self.SearchBtn.pack(pady=8)
+
+        self.results_frame = ctk.CTkFrame(main_container)
+        self.results_frame.pack(fill="both", expand=True)
+
+    def SearchFunc(self):
+        for widget in self.results_frame.winfo_children():
+            widget.destroy()
+
+        self.db.cursor.execute(
+            "SELECT * FROM medicine WHERE inn ILIKE %s", 
+            (f'%{self.SearchEntry.get()}%',)
+        )
+        result = self.db.cursor.fetchall()
+
+        headers_frame = ctk.CTkFrame(self.results_frame)
+        headers_frame.pack(fill="x")
+        
+        ctk.CTkLabel(headers_frame, text="МНН", width=350, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Торговое название", width=150, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Уровень контроля", width=150, anchor="w").pack(side="left", padx=5)
+        ctk.CTkLabel(headers_frame, text="Форма выпуска", width=150, anchor="w").pack(side="left", padx=5)  
+        ctk.CTkLabel(headers_frame, text="Дозировка", width=150, anchor="w").pack(side="left", padx=5)
+
+        scroll_frame = ctk.CTkScrollableFrame(self.results_frame)
+        scroll_frame.pack(fill="both", expand=True)
+
+        for medicine in result:
+            frame = ctk.CTkFrame(scroll_frame)
+            frame.pack(fill="x", pady=2)
+
+            ctk.CTkLabel(frame, text=medicine[2], width=350, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[3], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[4], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[5], width=150, anchor="w").pack(side="left", padx=5)
+            ctk.CTkLabel(frame, text=medicine[6], width=150, anchor="w").pack(side="left", padx=5)
+
 class AddMedicineWindow(WindowDefaultSettings):
     def __init__(self, parent):
         super().__init__(parent)
         self.app.title("Добавить препарат")
+
+        self.app.grid_columnconfigure(0, weight=1)
 
         self.DosageLabel = ctk.CTkLabel(self.app, text="Введите МНН:")
         self.DosageLabel.grid(row=0, column=0, padx=8, pady=8, sticky="e")
