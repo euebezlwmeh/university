@@ -448,6 +448,14 @@ class AdminWindow(WindowDefaultSize):
                                                           command=self.count_contracts_for_every_client_func)
         self.count_contracts_for_every_client_btn.grid(row=11, column=0, sticky="nw")
 
+        self.anniversary_btn = tk.Button(self.root,
+                                            text="Юбилеи клиентов",
+                                            width=20,
+                                            height=1,
+                                            font=("Arial", 12),
+                                            command=self.anniversary_func)
+        self.anniversary_btn.grid(row=12, column=0, sticky="nw")
+
     def all_client_func(self):
         AllClientWindow(self.root)
 
@@ -480,6 +488,9 @@ class AdminWindow(WindowDefaultSize):
 
     def count_contracts_for_every_client_func(self):
         CountContractForEveryClientWindow(self.root)
+
+    def anniversary_func(self):
+        AnniversaryWindow(self.root)
 
     def back(self):
         self.root.destroy()
@@ -676,9 +687,9 @@ class ContractCoastWindow(WindowDefaultSize):
                                     columns=("MAX", "MIN", "AVG"), 
                                     show="headings")
         
-        coasts_table.heading("MAX", text="Максимальное значение стоимости договора")
-        coasts_table.heading("MIN", text="Минимальное значение стоимости договора")
-        coasts_table.heading("AVG", text="Среднее значение стоимости договора")
+        coasts_table.heading("MAX", text="Максимальное значение")
+        coasts_table.heading("MIN", text="Минимальное значение")
+        coasts_table.heading("AVG", text="Среднее значение")
 
         for coast in coasts:
             coasts_table.insert("", "end", values=coast)
@@ -901,10 +912,10 @@ class ContractByConclusionDateWindow(WindowDefaultSize):
                                 columns=("contract_id", "space_id", "conclusion_date", "total_coast", "completion_date"),
                                 show="headings")
         all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("client_id", text="client_id")
         all_contracts_table.heading("space_id", text="space_id")
-        all_contracts_table.heading("conclusion_date", text="Дата заключения")
-        all_contracts_table.heading("total_coast", text="Итоговая стоимость")
-        all_contracts_table.heading("completion_date", text="Дата завершения")
+        all_contracts_table.heading("total_coast", text="Дата заключения")
+        all_contracts_table.heading("completion_date", text="Итоговая стоимость")
 
         for contract in contracts:
             all_contracts_table.insert("", "end", values=contract)
@@ -952,8 +963,6 @@ class CountContractForEveryClientWindow(WindowDefaultSize):
 
         BackBtn(self.root, self.back)
 
-        self.db = DbConnection()
-
         self.db.cursor.execute("SELECT client_id, COUNT(*) FROM contract GROUP BY client_id ORDER BY client_id")
         contracts = self.db.cursor.fetchall()
 
@@ -972,6 +981,48 @@ class CountContractForEveryClientWindow(WindowDefaultSize):
         self.root.destroy()
         self.root.master.deiconify()
 
+class AnniversaryWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Юбилеи в следующем месяце")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("""SELECT CONCAT(surname, ' ', LEFT(name_, 1), '.'),
+                               EXTRACT(YEAR FROM AGE(birthdate)) + 1,
+                               TO_CHAR(birthdate, 'DD.MM.YYYY'),
+                               TO_CHAR(
+                                    birthdate + (EXTRACT(YEAR FROM AGE(birthdate))) * INTERVAL '1 year' + INTERVAL '1 year',
+                                    'DD.MM.YYYY'
+                               )
+                               FROM client
+                               WHERE 
+                                    EXTRACT(MONTH FROM birthdate) = EXTRACT(MONTH FROM CURRENT_DATE + INTERVAL '1 month')
+                                    AND EXTRACT(YEAR FROM AGE(birthdate))::integer % 5 = 4
+                                    AND birthdate IS NOT NULL
+                                ORDER BY 
+                                    surname, name_""")
+        anniversary_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                        columns=("name", "age", "birthdate", "anniversary_date"),
+                        show="headings")
+        all_clients_table.heading("name", text="Имя")
+        all_clients_table.heading("age", text="Возраст")
+        all_clients_table.heading("birthdate", text="Дата рождения")
+        all_clients_table.heading("anniversary_date", text="Дата юбилея")
+
+        for clients in anniversary_clients:
+            all_clients_table.insert("", "end", values=clients)
+
+        all_clients_table.grid(row=1, column=0, sticky="nw")  
+        
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
 
 class MainWindow(WindowDefaultSize):
     def __init__(self, parent, client_id):
@@ -1458,12 +1509,12 @@ class MainWindow(WindowDefaultSize):
 
     def confirm_update_personal_data(self):
         self.db.cursor.execute("""UPDATE client SET 
-                               surname=%s,
-                               name_=%s,
-                               patronymic=%s,
-                               phone=%s,
-                               password_=%s
-                               WHERE client_id=%s""",
+                                surname=COALESCE(NULLIF(%s, ''), surname),
+                                name_=COALESCE(NULLIF(%s, ''), name_),
+                                patronymic=COALESCE(NULLIF(%s, ''), patronymic),
+                                phone=COALESCE(NULLIF(%s, ''), phone),
+                                password_=COALESCE(NULLIF(%s, ''), password_)
+                                WHERE client_id=%s""",
                                (self.update_surname_entry.get(),
                                 self.update_name_entry.get(),
                                 self.update_patronymic_entry.get(),
