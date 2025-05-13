@@ -354,10 +354,671 @@ class AdminWindow(WindowDefaultSize):
         self.root = tk.Toplevel(parent)
         self.root.title("Администратор")
         super().__init__(self.root)
+        self.db = DbConnection()
 
         BackBtn(self.root, self.back)
         self.parent = parent
         self.client_id = client_id
+
+        self.all_client_btn = tk.Button(self.root, 
+                                        text="Все клиенты", 
+                                        width=10, 
+                                        height=1, 
+                                        font=("Arial", 12), 
+                                        command=self.all_client_func)
+        self.all_client_btn.grid(row=1, column=0, sticky="nw")
+
+        self.first_10_client_btn = tk.Button(self.root, 
+                                             text="Первые 10 клиентов", 
+                                             width=20, 
+                                             height=1, 
+                                             font=("Arial", 12), 
+                                             command=self.first_10_client_func)
+        self.first_10_client_btn.grid(row=2, column=0, sticky="nw")
+
+        self.last_15_client_btn = tk.Button(self.root,
+                                             text="Последние 15 клиентов",
+                                             width=20, 
+                                             height=1, 
+                                             font=("Arial", 12), 
+                                             command=self.last_15_client_func)
+        self.last_15_client_btn.grid(row=3, column=0, sticky="nw")
+
+        self.delete_coast_per_unit_btn = tk.Button(self.root,
+                                                   text="Удалить услугу",
+                                                   width=20, 
+                                                   height=1, 
+                                                   font=("Arial", 12), 
+                                                   command=self.delete_coast_per_unit_func)
+        self.delete_coast_per_unit_btn.grid(row=4, column=0, sticky="nw")
+
+        self.unique_space_id_btn = tk.Button(self.root,
+                                             text="Помещения одного клиента",
+                                             width=25, 
+                                             height=1, 
+                                             font=("Arial", 12), 
+                                             command=self.unique_space_id_func) 
+        self.unique_space_id_btn.grid(row=5, column=0, sticky="nw")
+
+        self.contract_coast_btn = tk.Button(self.root,
+                                            text="Оценка стоимости договоров",
+                                            width=25,
+                                            height=1,
+                                            font=("Arial", 12),
+                                            command=self.contract_coast_func)
+        self.contract_coast_btn.grid(row=6, column=0, sticky="nw")
+
+        self.search_by_surname_btn = tk.Button(self.root,
+                                                text="Поиск по фамилии",
+                                                width=25,
+                                                height=1,
+                                                font=("Arial", 12),
+                                                command=self.search_by_surname_func)      
+        self.search_by_surname_btn.grid(row=7, column=0, sticky="nw")         
+
+        self.by_client_coast_btn = tk.Button(self.root, 
+                                            text="Сортировка по стоимости заказа клиента",
+                                            width=40,
+                                            height=1,
+                                            font=("Arial", 12),
+                                            command=self.by_client_coast_func)
+        self.by_client_coast_btn.grid(row=8, column=0, sticky="nw")
+
+        self.contract_by_conclusion_date_btn = tk.Button(self.root,
+                                                         text="Договор по дате и стоимости",
+                                                         width=25,
+                                                         height=1,
+                                                         font=("Arial", 12),
+                                                         command=self.contract_by_conclusion_date_func)
+        self.contract_by_conclusion_date_btn.grid(row=9, column=0, sticky="nw")
+
+        self.contracts_with_more_one_work_btn = tk.Button(self.root, 
+                                                          text="Договоры, в которых более одной работы",
+                                                          width=40,
+                                                          height=1,
+                                                          font=("Arial", 12),
+                                                          command=self.contracts_with_more_one_work_func)
+        self.contracts_with_more_one_work_btn.grid(row=10, column=0, sticky="nw")
+
+        self.count_contracts_for_every_client_btn = tk.Button(self.root,
+                                                          text="Количество договоров для каждого пользователя",
+                                                          width=50,
+                                                          height=1,
+                                                          font=("Arial", 12),
+                                                          command=self.count_contracts_for_every_client_func)
+        self.count_contracts_for_every_client_btn.grid(row=11, column=0, sticky="nw")
+
+        self.anniversary_btn = tk.Button(self.root,
+                                            text="Юбилеи клиентов",
+                                            width=20,
+                                            height=1,
+                                            font=("Arial", 12),
+                                            command=self.anniversary_func)
+        self.anniversary_btn.grid(row=12, column=0, sticky="nw")
+
+    def all_client_func(self):
+        AllClientWindow(self.root)
+
+    def first_10_client_func(self):
+        First10ClientWindow(self.root)
+
+    def last_15_client_func(self):
+        Last15ClientWindow(self.root)
+
+    def delete_coast_per_unit_func(self):
+        DeleteCoastPerUnitWindow(self.root)
+
+    def unique_space_id_func(self):
+        UniqueSpaceIdWindow(self.root)
+
+    def contract_coast_func(self):
+        ContractCoastWindow(self.root)
+
+    def search_by_surname_func(self):
+        SearchBySurnameWindow(self.root)
+
+    def by_client_coast_func(self):
+        ByClientCoastWindow(self.root)
+
+    def contract_by_conclusion_date_func(self):
+        ContractByConclusionDateWindow(self.root)
+
+    def contracts_with_more_one_work_func(self):
+        ContractsWithMoreOneWorkWindow(self.root)
+
+    def count_contracts_for_every_client_func(self):
+        CountContractForEveryClientWindow(self.root)
+
+    def anniversary_func(self):
+        AnniversaryWindow(self.root)
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class AllClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Список клиентов")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM client")
+        all_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                                              columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                              show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class First10ClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Первые 10 клиентов")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM client ORDER BY client_id ASC LIMIT 10")
+        all_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                                              columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                              show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+    
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class Last15ClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Последние 15 клиентов")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM client ORDER BY client_id DESC LIMIT 15")
+        all_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                                              columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                              show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class DeleteCoastPerUnitWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Удалить услугу")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.enter_coast_per_unit_label = tk.Label(self.root, text="Введите id услуги")
+        self.enter_coast_per_unit_label.grid(row=1, column=0, sticky="nw")
+        self.enter_coast_per_unit_entry = tk.Entry(self.root)
+        self.enter_coast_per_unit_entry.grid(row=1, column=1, sticky="nw")
+        self.confirm_deleting_btn = tk.Button(self.root,
+                                          text="Удалить услугу",
+                                          font=("Arial", 12), 
+                                          command=self.confirm_deleting_func)
+        self.confirm_deleting_btn.grid(row=2, column=0, sticky="nw")
+
+    def confirm_deleting_func(self):
+        self.db.cursor.execute("DELETE FROM coast_per_unit WHERE coast_per_unit_id=%s", (self.enter_coast_per_unit_entry.get(),))
+        self.db.connection.commit()
+
+        self.success_label = tk.Label(self.root, text="Успешно", bg="green")
+        self.success_label.grid(row=3, column=1, sticky="nw")
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class UniqueSpaceIdWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Помещения клиента")
+        super().__init__(self.root)
+        self.db = DbConnection()
+        BackBtn(self.root, self.back)
+
+        self.enter_client_label = tk.Label(self.root, text="Введите id клиента")
+        self.enter_client_label.grid(row=1, column=0, sticky="nw")
+        self.enter_client_entry = tk.Entry(self.root)
+        self.enter_client_entry.grid(row=2, column=0, sticky="nw")
+        self.confirm_btn = tk.Button(self.root,
+                                    text="Показать помещения",
+                                    font=("Arial", 12), 
+                                    command=self.client_servise)
+        self.confirm_btn.grid(row=3, column=0, sticky="nw")
+
+    def client_servise(self):
+        self.db.cursor.execute("""SELECT DISTINCT s.space_id, s.street, s.home, s.floor_, s.apartment, s.rooms_num
+                                    FROM contract c
+                                    JOIN space s ON c.space_id = s.space_id
+                                    WHERE c.client_id = %s""", (self.enter_client_entry.get(),))
+        all_client_spaces = self.db.cursor.fetchall()
+
+        all_client_space_table = ttk.Treeview(self.root, 
+                                        columns=("space_id", "street", "home", "floor_", "apartment", "rooms_num"),
+                                        show="headings")
+        all_client_space_table.heading("space_id", text="space_id")
+        all_client_space_table.heading("street", text="Улица")
+        all_client_space_table.heading("home", text="Дом")
+        all_client_space_table.heading("floor_", text="Этаж")
+        all_client_space_table.heading("apartment", text="Квартира")
+        all_client_space_table.heading("rooms_num", text="Количество комнат")
+
+        for space in all_client_spaces:
+            all_client_space_table.insert("", "end", values=space)
+
+        all_client_space_table.grid(row=4, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ContractCoastWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Оценка стоимости договоров")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT MAX(total_coast), MIN(total_coast), AVG(total_coast) FROM contract")
+        coasts = self.db.cursor.fetchall()
+
+        coasts_table = ttk.Treeview(self.root, 
+                                    columns=("MAX", "MIN", "AVG"), 
+                                    show="headings")
+        
+        coasts_table.heading("MAX", text="Максимальное значение")
+        coasts_table.heading("MIN", text="Минимальное значение")
+        coasts_table.heading("AVG", text="Среднее значение")
+
+        for coast in coasts:
+            coasts_table.insert("", "end", values=coast)
+
+        coasts_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+        self.more_coast_btn = tk.Button(self.root, text="Стоимость договора больше:", command=self.more_coast_func)
+        self.more_coast_btn.grid(row=2, column=0, sticky="nw")
+        self.more_coast_entry = tk.Entry(self.root)
+        self.more_coast_entry.grid(row=3, column=0, sticky="nw")
+        self.less_coast_btn = tk.Button(self.root, text="Стоимость договора меньше:", command=self.less_coast_func)
+        self.less_coast_btn.grid(row=4, column=0, sticky="nw")
+        self.less_coast_entry = tk.Entry(self.root)
+        self.less_coast_entry.grid(row=5, column=0, sticky="nw")
+        self.between_coast_btn = tk.Button(self.root, text="Стоимость договора между:", command=self.between_coast_func)
+        self.between_coast_btn.grid(row=6, column=0, sticky="nw")
+        self.between_min_coast_entry = tk.Entry(self.root)
+        self.between_min_coast_entry.grid(row=7, column=0, sticky="nw")
+        self.and_label = tk.Label(self.root, text="И")
+        self.and_label.grid(row=8, column=0, sticky="nw")
+        self.between_max_coast_entry = tk.Entry(self.root)
+        self.between_max_coast_entry.grid(row=9, column=0, sticky="nw")
+
+    def more_coast_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE total_coast > %s", (self.more_coast_entry.get(),))
+        all_contract = self.db.cursor.fetchall()
+
+        all_contract_table = ttk.Treeview(self.root, 
+                                        columns=("contract_id", "client_id", "space_id", "conclusion_date", "total_coast", "completion_date", "contract_status_id"),
+                                        show="headings")
+        all_contract_table.heading("contract_id", text="contract_id")
+        all_contract_table.heading("client_id", text="client_id")
+        all_contract_table.heading("space_id", text="space_id")
+        all_contract_table.heading("conclusion_date", text="Дата заключения")
+        all_contract_table.heading("total_coast", text="Стоимость")
+        all_contract_table.heading("completion_date", text="Дата завершения")
+        all_contract_table.heading("contract_status_id", text="id договора")
+
+        for contract in all_contract:
+            all_contract_table.insert("", "end", values=contract)
+
+        all_contract_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def less_coast_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE total_coast < %s", (self.less_coast_entry.get(),))
+        all_contract = self.db.cursor.fetchall()
+
+        all_contract_table = ttk.Treeview(self.root, 
+                                        columns=("contract_id", "client_id", "space_id", "conclusion_date", "total_coast", "completion_date", "contract_status_id"),
+                                        show="headings")
+        all_contract_table.heading("contract_id", text="contract_id")
+        all_contract_table.heading("client_id", text="client_id")
+        all_contract_table.heading("space_id", text="space_id")
+        all_contract_table.heading("conclusion_date", text="Дата заключения")
+        all_contract_table.heading("total_coast", text="Стоимость")
+        all_contract_table.heading("completion_date", text="Дата завершения")
+        all_contract_table.heading("contract_status_id", text="id договора")
+
+        for contract in all_contract:
+            all_contract_table.insert("", "end", values=contract)
+
+        all_contract_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def between_coast_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE total_coast BETWEEN %s AND %s", (self.between_min_coast_entry.get(), self.between_max_coast_entry.get()))
+        all_contract = self.db.cursor.fetchall()
+
+        all_contract_table = ttk.Treeview(self.root, 
+                                        columns=("contract_id", "client_id", "space_id", "conclusion_date", "total_coast", "completion_date", "contract_status_id"),
+                                        show="headings")
+        all_contract_table.heading("contract_id", text="contract_id")
+        all_contract_table.heading("client_id", text="client_id")
+        all_contract_table.heading("space_id", text="space_id")
+        all_contract_table.heading("conclusion_date", text="Дата заключения")
+        all_contract_table.heading("total_coast", text="Стоимость")
+        all_contract_table.heading("completion_date", text="Дата завершения")
+        all_contract_table.heading("contract_status_id", text="id договора")
+
+        for contract in all_contract:
+            all_contract_table.insert("", "end", values=contract)
+
+        all_contract_table.grid(row=1, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class SearchBySurnameWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Поиск по фамилии")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.search_entry = tk.Entry(self.root)
+        self.search_entry.grid(row=1, column=0, sticky="nw")
+        self.search_btn = tk.Button(self.root, text="Поиск", command=self.search_func)
+        self.search_btn.grid(row=2, column=0, sticky="nw")
+
+        
+    def search_func(self):
+        self.db.cursor.execute(f"SELECT * FROM client WHERE surname LIKE '{self.search_entry.get()}%';")
+        all_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                                        columns=("client_id", "Фамилия", "Имя", "Отчество", "Телефон", "Пароль"),
+                                        show="headings")
+        all_clients_table.heading("client_id", text="client_id")
+        all_clients_table.heading("Фамилия", text="Фамилия")
+        all_clients_table.heading("Имя", text="Имя")
+        all_clients_table.heading("Отчество", text="Отчество")
+        all_clients_table.heading("Телефон", text="Телефон")
+        all_clients_table.heading("Пароль", text="Пароль")
+
+        for client in all_clients:
+            all_clients_table.insert("", "end", values=client)
+
+        all_clients_table.grid(row=3, column=0, sticky="nw")
+
+        self.db.connection.commit()
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ByClientCoastWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Сортировка по стоимости договора у клиента")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.client_id_label = tk.Label(self.root, text="Введите id клиента")
+        self.client_id_label.grid(row=1, column=0)
+        self.client_id_entry = tk.Entry(self.root)
+        self.client_id_entry.grid(row=2, column=0)
+        self.coast_min_label = tk.Label(self.root, text="Введите нижнюю границу")
+        self.coast_min_label.grid(row=3, column=0)
+        self.coast_min_label_entry = tk.Entry(self.root)
+        self.coast_min_label_entry.grid(row=4, column=0)
+        self.coast_max_label = tk.Label(self.root, text="Введите верхнюю границу")
+        self.coast_max_label.grid(row=5, column=0)
+        self.coast_max_label_entry = tk.Entry(self.root)
+        self.coast_max_label_entry.grid(row=6, column=0)
+        self.by_client_btn = tk.Button(self.root, text="До и после диапазона", command=self.and_func)
+        self.by_client_btn.grid(row=7, column=0)
+        self.by_client_btn = tk.Button(self.root, text="В диапазоне", command=self.between_func)
+        self.by_client_btn.grid(row=8, column=0)
+
+    def and_func(self):
+        self.db.cursor.execute("""SELECT * FROM contract WHERE client_id=%s AND (total_coast < %s OR total_coast > %s) 
+                               AND NOT total_coast=%s AND NOT total_coast=%s 
+                               AND total_coast IS NOT NULL AND total_coast IS NOT NULL""", 
+                               (self.client_id_entry.get(), 
+                                self.coast_min_label_entry.get(), 
+                                self.coast_max_label_entry.get(), 
+                                self.coast_min_label_entry.get(), 
+                                self.coast_max_label_entry.get(), 
+                                self.coast_min_label_entry.get(), 
+                                self.coast_max_label_entry.get(),))
+        contracts = self.db.cursor.fetchall()
+        self.table_func(contracts)
+        self.db.connection.commit()
+
+    def between_func(self):
+        self.db.cursor.execute("SELECT * FROM contract WHERE client_id=%s AND AND total_coast BETWEEN %s AND %s", 
+                               (self.client_id_entry.get(), self.coast_min_label_entry.get(), self.coast_min_label_entry.get(),))
+        contracts = self.db.cursor.fetchall()
+        self.table_func(contracts)
+        self.db.connection.commit()
+
+    def table_func(self, contracts):
+        all_contracts_table = ttk.Treeview(self.root, 
+                                columns=("contract_id", "space_id", "conclusion_date", "total_coast", "completion_date"),
+                                show="headings")
+        all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("space_id", text="space_id")
+        all_contracts_table.heading("conclusion_date", text="Дата заключения")
+        all_contracts_table.heading("total_coast", text="Итоговая стоимость")
+        all_contracts_table.heading("completion_date", text="Дата завершения")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=9, column=0, sticky="nw")
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ContractByConclusionDateWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Договоры по дате заключения и стоимости")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT * FROM contract ORDER BY conclusion_date DESC, total_coast ASC")
+        contracts = self.db.cursor.fetchall()
+
+        self.table_func(contracts)
+        self.db.connection.commit()
+
+    def table_func(self, contracts):
+        all_contracts_table = ttk.Treeview(self.root, 
+                                columns=("contract_id", "space_id", "conclusion_date", "total_coast", "completion_date"),
+                                show="headings")
+        all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("client_id", text="client_id")
+        all_contracts_table.heading("space_id", text="space_id")
+        all_contracts_table.heading("total_coast", text="Дата заключения")
+        all_contracts_table.heading("completion_date", text="Итоговая стоимость")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=1, column=0, sticky="nw")
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class ContractsWithMoreOneWorkWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Договоры, в которых более одной работы")
+        super().__init__(self.root)
+
+        BackBtn(self.root, self.back)
+
+        self.db = DbConnection()
+
+        self.db.cursor.execute("SELECT contract_id, total_coast FROM contract EXCEPT SELECT contract_id, coast_for_work FROM works_under_contract ORDER BY contract_id ASC")
+        contracts = self.db.cursor.fetchall()
+
+        all_contracts_table = ttk.Treeview(self.root, 
+                        columns=("contract_id", "total_coast"),
+                        show="headings")
+        all_contracts_table.heading("contract_id", text="contract_id")
+        all_contracts_table.heading("total_coast", text="Итоговая стоимость")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=1, column=0, sticky="nw")
+ 
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class CountContractForEveryClientWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Количество договоров для каждого пользователя")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("SELECT client_id, COUNT(*) FROM contract GROUP BY client_id ORDER BY client_id")
+        contracts = self.db.cursor.fetchall()
+
+        all_contracts_table = ttk.Treeview(self.root, 
+                        columns=("client_id", "count"),
+                        show="headings")
+        all_contracts_table.heading("client_id", text="client_id")
+        all_contracts_table.heading("count", text="Количество договоров")
+
+        for contract in contracts:
+            all_contracts_table.insert("", "end", values=contract)
+
+        all_contracts_table.grid(row=1, column=0, sticky="nw")        
+
+    def back(self):
+        self.root.destroy()
+        self.root.master.deiconify()
+
+class AnniversaryWindow(WindowDefaultSize):
+    def __init__(self, parent):
+        self.root = tk.Toplevel(parent)
+        self.root.title("Юбилеи в следующем месяце")
+        super().__init__(self.root)
+        self.db = DbConnection()
+
+        BackBtn(self.root, self.back)
+
+        self.db.cursor.execute("""SELECT CONCAT(surname, ' ', LEFT(name_, 1), '.'),
+                               EXTRACT(YEAR FROM AGE(birthdate)) + 1,
+                               TO_CHAR(birthdate, 'DD.MM.YYYY'),
+                               TO_CHAR(
+                                    birthdate + (EXTRACT(YEAR FROM AGE(birthdate))) * INTERVAL '1 year' + INTERVAL '1 year',
+                                    'DD.MM.YYYY'
+                               )
+                               FROM client
+                               WHERE 
+                                    EXTRACT(MONTH FROM birthdate) = EXTRACT(MONTH FROM CURRENT_DATE + INTERVAL '1 month')
+                                    AND EXTRACT(YEAR FROM AGE(birthdate))::integer % 5 = 4
+                                    AND birthdate IS NOT NULL
+                                ORDER BY 
+                                    surname, name_""")
+        anniversary_clients = self.db.cursor.fetchall()
+
+        all_clients_table = ttk.Treeview(self.root, 
+                        columns=("name", "age", "birthdate", "anniversary_date"),
+                        show="headings")
+        all_clients_table.heading("name", text="Имя")
+        all_clients_table.heading("age", text="Возраст")
+        all_clients_table.heading("birthdate", text="Дата рождения")
+        all_clients_table.heading("anniversary_date", text="Дата юбилея")
+
+        for clients in anniversary_clients:
+            all_clients_table.insert("", "end", values=clients)
+
+        all_clients_table.grid(row=1, column=0, sticky="nw")  
+        
 
     def back(self):
         self.root.destroy()
@@ -416,7 +1077,11 @@ class MainWindow(WindowDefaultSize):
                                         command=self.select_unpaid_orders_func)
         self.unpaid_orders_btn.place(x=720, y=100)
 
-
+        self.update_personal_data_btn = tk.Button(self.root,
+                                                  font=("Arial", 14),
+                                                  text="Обновить персональные данные",
+                                                  command=self.update_personal_data)
+        self.update_personal_data_btn.place(x=1000, y=50)
 
     def add_order_func(self):
         self.add_servise_btn = tk.Button(self.root,
@@ -810,6 +1475,67 @@ class MainWindow(WindowDefaultSize):
     def select_unpaid_orders_func(self):
         UnpaidOrdersWindow(self.root, self.client_id)
 
+    def update_personal_data(self):
+        self.update_surname_label = tk.Label(self.root, text="Введите новую фамилию:", font=("Arial", 12), anchor="e", width=30)
+        self.update_surname_label.place(x=900, y=90)
+        self.update_surname_entry = tk.Entry(self.root)
+        self.update_surname_entry.place(x=1200, y=90)
+
+        self.update_name_label = tk.Label(self.root, text="Введите новое имя:", font=("Arial", 12), anchor="e", width=30)
+        self.update_name_label.place(x=900, y=130)
+        self.update_name_entry = tk.Entry(self.root)
+        self.update_name_entry.place(x=1200, y=130)
+
+        self.update_patronymic_label = tk.Label(self.root, text="Введите новое отчество:", font=("Arial", 12), anchor="e", width=30)
+        self.update_patronymic_label.place(x=900, y=170)
+        self.update_patronymic_entry = tk.Entry(self.root)
+        self.update_patronymic_entry.place(x=1200, y=170)
+
+        self.update_phone_label = tk.Label(self.root, text="Введите новый номер телефона:", font=("Arial", 12), anchor="e", width=30)
+        self.update_phone_label.place(x=900, y=210)
+        self.update_phone_entry = tk.Entry(self.root)
+        self.update_phone_entry.place(x=1200, y=210)
+
+        self.update_password_label = tk.Label(self.root, text="Введите новый пароль:", font=("Arial", 12), anchor="e", width=30)
+        self.update_password_label.place(x=900, y=250)
+        self.update_password_entry = tk.Entry(self.root)
+        self.update_password_entry.place(x=1200, y=250)
+
+        self.confirm_update_personal_data_btn = tk.Button(self.root, 
+                                                          text="Подтвердить", 
+                                                          font=("Arial", 14), 
+                                                          command=self.confirm_update_personal_data)
+        self.confirm_update_personal_data_btn.place(x=1100, y=290)
+
+    def confirm_update_personal_data(self):
+        self.db.cursor.execute("""UPDATE client SET 
+                                surname=COALESCE(NULLIF(%s, ''), surname),
+                                name_=COALESCE(NULLIF(%s, ''), name_),
+                                patronymic=COALESCE(NULLIF(%s, ''), patronymic),
+                                phone=COALESCE(NULLIF(%s, ''), phone),
+                                password_=COALESCE(NULLIF(%s, ''), password_)
+                                WHERE client_id=%s""",
+                               (self.update_surname_entry.get(),
+                                self.update_name_entry.get(),
+                                self.update_patronymic_entry.get(),
+                                self.update_phone_entry.get(),
+                                self.update_password_entry.get(),
+                                self.client_id))
+        self.db.connection.commit()
+
+        widgets = ["update_surname_label", "update_surname_entry", "update_name_label", "update_name_entry",
+                   "update_patronymic_label", "update_patronymic_entry", "update_phone_label", "update_phone_entry", 
+                   "update_password_label", "update_password_entry", "confirm_update_personal_data_btn"
+        ]
+
+        for widget_name in widgets:
+            if hasattr(self, widget_name):
+                widget = getattr(self, widget_name)
+                if widget.winfo_exists():
+                    widget.destroy()
+
+        self.root.update()
+
     def back(self):
         self.root.destroy()
         self.root.master.deiconify()
@@ -817,9 +1543,6 @@ class MainWindow(WindowDefaultSize):
     def on_close(self): # не робит
         self.root.destroy()
         self.parent.destroy()
-
-class DeleteServise(WindowDefaultSize):
-    pass
 
 class AllContractsWindow:
     def __init__(self, parent, client_id, coast_per_unit_id):
