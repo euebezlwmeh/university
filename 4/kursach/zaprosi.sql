@@ -18,10 +18,15 @@ VALUES (1, 1, 1000, '2025-01-20', '2028-01-20', 200)
 INSERT INTO Batch_writing_off (id_medicine_batch, reason, count)
 VALUES (1, '2025-03-05', 'Нарушение упаковки', 10)
 
-UPDATE Medicine_batch 
-SET count = count - 10
-WHERE id_medicine_batch = 1
+-- Подсчёт текущего количества лекарственного препарата из партии с учётом списания препаратов.
+UPDATE Medicine_batch
+SET count = Medicine_batch.count - Batch_writing_off.count
+FROM Batch_writing_off
+WHERE Medicine_batch.id_medicine_batch = Batch_writing_off.id_medicine_batch
+AND Batch_writing_off.id_batch_writing_off = 19;
 
+-- Поиск лекарственных препаратов из списка препаратов по МНН.
+SELECT * FROM medicine WHERE inn ILIKE '%парацетамол%'
 
 -- СОЗДАНИЕ ТАБЛИЦ
 CREATE TABLE Storage_conditions(
