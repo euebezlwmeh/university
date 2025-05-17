@@ -219,6 +219,7 @@ class AddMedicineWindow(WindowDefaultSettings):
                                self.TradeNameEntry.get(), self.controlLevelMenu.get(),
                                self.FormReleaseMenu.get(), self.DosageEntry.get()))
         self.db.connection.commit()
+        messagebox.showinfo("Успех", f"Препарат {self.TradeNameEntry.get()} успешно добавлен!")
 
         messagebox.showinfo(title="Успех", message="Препарат успешно добавлен!")
         self.parent.deiconify()
@@ -572,7 +573,7 @@ class BatchWritingOffWindow(WindowDefaultSettings):
 
         self.db.connection.commit()
         
-        messagebox.showinfo("Успех", "Препараты успешно списаны")
+        messagebox.showinfo("Успех", f"Препараты успешно списаны в количестве {count_to_write_off}")
 
         self.medicine_batch = list(self.medicine_batch)
         self.medicine_batch[9] = current_count - count_to_write_off
